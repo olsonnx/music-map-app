@@ -1,8 +1,8 @@
-import { auth } from '../api/firebase-config.js'; // Usunięto 'db'
+import { auth } from '../api/firebase-config.js'; 
 import { updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-// Usunięto importy firebase-firestore
 import { loadFriends, checkIsFriend, toggleFriendInDB } from './friends.js';
 
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/22_ruszkowski/backend_mapy/api';
 const DEFAULT_AVATAR = 'img/default-avatar.jpg';
 
 const profilePanel = document.getElementById('profile-panel');
@@ -45,8 +45,7 @@ async function loadFavorites(uid) {
     favoritesList.innerHTML = '<p style="color: #aaa; font-size: 13px; text-align: center;">Ładowanie...</p>';
     
     try {
-        // Nowy endpoint do pobierania ulubionych
-        const response = await fetch(`http://localhost:3000/api/favorites/${uid}`);
+        const response = await fetch(`${API_BASE}/favorites/${uid}`);
         if (!response.ok) throw new Error("Błąd sieci");
         const favs = await response.json();
 
@@ -90,8 +89,7 @@ export async function showUserProfile(uid) {
     profileAvatarPreview.src = DEFAULT_AVATAR;
 
     try {
-        // Pobieramy dane użytkownika z MySQL
-        const response = await fetch(`http://localhost:3000/api/users/${uid}`);
+        const response = await fetch(`${API_BASE}/users/${uid}`);
         
         if (response.ok) {
             const data = await response.json();
@@ -116,11 +114,9 @@ export async function showUserProfile(uid) {
                 tabFavorites.style.display = 'block'; 
                 tabEdit.textContent = "Informacje";
 
-                // Sprawdzanie znajomych używając zaktualizowanych funkcji
                 isAlreadyFriend = await checkIsFriend(uid);
                 
-                // Sprawdzamy czy jesteśmy mutuals (czy on dodał mnie)
-                const reverseCheck = await fetch(`http://localhost:3000/api/friends/check?userId=${uid}&friendId=${auth.currentUser.uid}`);
+                const reverseCheck = await fetch(`${API_BASE}/friends/check?userId=${uid}&friendId=${auth.currentUser.uid}`);
                 const reverseData = await reverseCheck.json();
                 isMutual = isAlreadyFriend && reverseData.isFriend;
 
@@ -198,8 +194,7 @@ if (saveProfileBtn) {
         try {
             await updateProfile(auth.currentUser, { photoURL: newPhotoUrl });
             
-            // Zapis do MySQL zamiast Firebase Firestore
-            await fetch(`http://localhost:3000/api/users/${auth.currentUser.uid}`, {
+            await fetch(`${API_BASE}/users/${auth.currentUser.uid}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bio: newBio, photoURL: newPhotoUrl })

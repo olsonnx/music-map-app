@@ -1,7 +1,7 @@
-import { auth } from '../api/firebase-config.js'; // Usunięto 'db'
-// Usunięto importy firebase-firestore
+import { auth } from '../api/firebase-config.js'; 
 import { showUserProfile } from './profile.js';
 
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/22_ruszkowski/backend_mapy/api';
 const DEFAULT_AVATAR = 'img/default-avatar.jpg';
 
 const addFriendInput = document.getElementById('add-friend-input');
@@ -21,15 +21,12 @@ if (addFriendBtn) {
         addFriendBtn.textContent = "Szukanie...";
         
         try {
-            // Pytamy nasz serwer, czy użytkownik o takim nicku istnieje w MySQL
-            const response = await fetch(`http://localhost:3000/api/users/find?nick=${nick}`);
+            const response = await fetch(`${API_BASE}/users/find?nick=${nick}`);
             
             if (!response.ok) {
                 alert("Nie znaleziono użytkownika o takim nicku.");
             } else {
                 const friendData = await response.json();
-                
-                // Wywołujemy nowy endpoint do dodawania znajomego
                 await toggleFriendInDB(friendData.id, true);
                 addFriendInput.value = '';
                 alert("Dodano do znajomych!");
@@ -57,9 +54,7 @@ export async function loadFriends() {
     friendsList.innerHTML = '<p style="color: #aaa; font-size: 13px; text-align: center;">Ładowanie...</p>';
     
     try {
-        // Uderzamy do naszego API, które zwróci listę znajomych i od razu sprawdzi 'Mutuals'
-        const response = await fetch(`http://localhost:3000/api/friends/${auth.currentUser.uid}`);
-        
+        const response = await fetch(`${API_BASE}/friends/${auth.currentUser.uid}`);
         if (!response.ok) throw new Error("Błąd sieci");
         const friends = await response.json();
 
@@ -71,11 +66,10 @@ export async function loadFriends() {
         friendsList.innerHTML = ''; 
         
         for (const fData of friends) {
-            const fPic = fData.avatar || DEFAULT_AVATAR; // Będziemy musieli dodać kolumnę avatar w MySQL, lub brać z Firebase (później)
+            const fPic = fData.avatar || DEFAULT_AVATAR; 
             const fName = fData.userName || "Nieznany";
             const fid = fData.friendId;
             
-            // Nasz serwer sprawdzi to za pomocą SQL JOIN!
             const mutualBadge = fData.isMutual ? '<span class="mutual-badge" title="Wzajemni znajomi (Mutuals)">🤝</span>' : '';
             
             const friendDiv = document.createElement('div');
@@ -107,7 +101,7 @@ export async function loadFriends() {
 export async function checkIsFriend(uid) {
     if (!auth.currentUser) return false;
     try {
-        const response = await fetch(`http://localhost:3000/api/friends/check?userId=${auth.currentUser.uid}&friendId=${uid}`);
+        const response = await fetch(`${API_BASE}/friends/check?userId=${auth.currentUser.uid}&friendId=${uid}`);
         const data = await response.json();
         return data.isFriend;
     } catch (e) {
@@ -121,7 +115,7 @@ export async function toggleFriendInDB(friendId, isAdding) {
     try {
         const method = isAdding ? 'POST' : 'DELETE';
         
-        const response = await fetch('http://localhost:3000/api/friends', {
+        const response = await fetch(`${API_BASE}/friends`, {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

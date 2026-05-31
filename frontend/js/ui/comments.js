@@ -1,7 +1,8 @@
-import { auth } from '../api/firebase-config.js'; // Zostawiamy tylko logowanie
-// Usunięto wszystkie importy firebase-firestore
+import { auth } from '../api/firebase-config.js'; 
 import { authModal } from './auth.js';
 import { showUserProfile } from './profile.js';
+
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/22_ruszkowski/backend_mapy/api';
 
 const commentsList = document.getElementById('comments-list');
 const commentInput = document.getElementById('comment-input');
@@ -13,11 +14,9 @@ const MAX_CHARS = 140;
 let charCounter = null;
 
 if (commentInput) {
-    // Fizyczna blokada pola tekstowego
     commentInput.setAttribute('maxlength', MAX_CHARS);
     commentInput.placeholder = `Napisz komentarz...`;
     
-    // Tworzenie licznika na żywo w JS
     charCounter = document.createElement('div');
     charCounter.style.fontSize = '11px';
     charCounter.style.color = '#888';
@@ -30,7 +29,6 @@ if (commentInput) {
     const inputArea = commentInput.parentNode;
     inputArea.parentNode.insertBefore(charCounter, inputArea.nextSibling);
 
-    // Nasłuchiwanie wpisywania
     commentInput.addEventListener('input', () => {
         const len = commentInput.value.length;
         charCounter.textContent = `${len} / ${MAX_CHARS}`;
@@ -39,7 +37,6 @@ if (commentInput) {
 }
 
 export const clearComments = () => {
-    // Czyszczenie pola i licznika przy zamykaniu panelu
     if (commentInput) commentInput.value = '';
     if (charCounter) {
         charCounter.textContent = `0 / ${MAX_CHARS}`;
@@ -52,8 +49,7 @@ export const loadComments = async (bubbleId) => {
     commentsList.innerHTML = '<p style="color: #666; font-size: 13px; text-align: center; margin-top: 20px;">Ładowanie komentarzy...</p>';
     
     try {
-        // Pobieramy komentarze z Twojego API zamiast z Firebase
-        const response = await fetch(`http://localhost:3000/api/comments/${bubbleId}`);
+        const response = await fetch(`${API_BASE}/comments/${bubbleId}`);
         const comments = await response.json();
 
         commentsList.innerHTML = '';
@@ -66,11 +62,8 @@ export const loadComments = async (bubbleId) => {
             const div = document.createElement('div');
             div.className = 'comment-item';
             
-            // MySQL wysyła true/false lub 1/0
             if (commentData.isDeleted) {
-                div.innerHTML = `
-                    <span class="comment-text" style="color: #888; font-style: italic; font-size: 13px;">[ Ten komentarz został usunięty ]</span>
-                `;
+                div.innerHTML = `<span class="comment-text" style="color: #888; font-style: italic; font-size: 13px;">[ Ten komentarz został usunięty ]</span>`;
             } else {
                 const isMine = auth.currentUser && auth.currentUser.uid === commentData.userId;
                 
@@ -106,8 +99,7 @@ const submitComment = async () => {
     }
 
     try {
-        // Wysyłamy POST do Twojego serwera Node.js
-        const response = await fetch('http://localhost:3000/api/comments', {
+        const response = await fetch(`${API_BASE}/comments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -119,14 +111,12 @@ const submitComment = async () => {
 
         if (!response.ok) throw new Error('Błąd dodawania komentarza');
         
-        // Reset formularza
         commentInput.value = ''; 
         if (charCounter) {
             charCounter.textContent = `0 / ${MAX_CHARS}`;
             charCounter.style.color = '#888';
         }
 
-        // Ręczne odświeżenie listy komentarzy po dodaniu
         loadComments(currentBubbleId);
 
     } catch (error) { console.error("Błąd dodawania komentarza:", error); }
@@ -137,7 +127,6 @@ commentInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') submitComment();
 });
 
-// --- NASŁUCHIWANIE KLIKNIĘĆ (PROFILE I USUWANIE) ---
 if (commentsList) {
     commentsList.addEventListener('click', async (e) => {
         const profileLink = e.target.closest('.prof-link');
@@ -154,16 +143,13 @@ if (commentsList) {
             
             if (confirmDelete) {
                 try {
-                    // Żądanie typu PATCH do zaktualizowania wpisu na "usunięty"
-                    const response = await fetch(`http://localhost:3000/api/comments/${commentId}`, {
+                    const response = await fetch(`${API_BASE}/comments/${commentId}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ isDeleted: true })
                     });
 
                     if (!response.ok) throw new Error('Błąd usuwania komentarza');
-
-                    // Odświeżenie widoku po pomyślnym usunięciu
                     loadComments(currentBubbleId);
 
                 } catch (error) {

@@ -1,7 +1,8 @@
-import { auth } from '../api/firebase-config.js'; // Usunięto 'db'
-// Usunięto importy z firebase-firestore
+import { auth } from '../api/firebase-config.js'; 
 import { searchSpotify } from '../api/spotify.js';
-import { loadBubbles } from '../map.js'; // Dodajemy import funkcji odświeżającej mapę!
+import { loadBubbles } from '../map.js'; 
+
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/22_ruszkowski/backend_mapy/api';
 
 const searchModal = document.getElementById('search-modal');
 const closeSearchBtn = document.getElementById('close-search-btn');
@@ -49,8 +50,7 @@ function renderSpotifyResults(tracks) {
 
         div.addEventListener('click', async () => {
             try {
-                // Zastępujemy addDoc z Firebase zwykłym żądaniem do Twojego Node.js
-                const response = await fetch('http://localhost:3000/api/bubbles', {
+                const response = await fetch(`${API_BASE}/bubbles`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -71,7 +71,6 @@ function renderSpotifyResults(tracks) {
                 spotifySearchInput.value = '';
                 spotifyResults.innerHTML = '';
                 
-                // Odświeżamy mapę, żeby pokazała nowo dodany utwór
                 loadBubbles();
                 
             } catch (error) { 

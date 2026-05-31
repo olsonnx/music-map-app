@@ -1,7 +1,9 @@
-import { auth } from './api/firebase-config.js'; // Zostawiamy tylko auth
+import { auth } from './api/firebase-config.js';
 import { authModal } from './ui/auth.js';
 import { openSearchModal } from './ui/search.js';
 import { openSidePanel, closePanel } from './ui/panel.js';
+
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/22_ruszkowski/backend_mapy/api';
 
 const bounds = [[-90, -180], [90, 180]];
 const map = L.map('map', { 
@@ -19,19 +21,14 @@ const bubblesLayer = L.layerGroup().addTo(map);
 map.on('click', function(e) {
     if (!auth.currentUser) { authModal.classList.add('active'); return; }
     
-    
     closePanel();
     document.getElementById('profile-panel').classList.remove('active'); 
-    
-    
     openSearchModal(e.latlng);
 });
 
-
 export const loadBubbles = async () => {
     try {
-        
-        const response = await fetch('http://localhost:3000/api/bubbles');
+        const response = await fetch(`${API_BASE}/bubbles`);
         const bubbles = await response.json();
 
         bubblesLayer.clearLayers();
@@ -40,9 +37,7 @@ export const loadBubbles = async () => {
         const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
         bubbles.forEach((bubble) => {
-            
             const createdAt = new Date(bubble.timestamp).getTime();
-            
             
             if (now - createdAt > TWENTY_FOUR_HOURS) {
                 return;
@@ -53,7 +48,6 @@ export const loadBubbles = async () => {
                 bubblingMouseEvents: false
             });
 
-            // cały obiekt bubble do panelu bocznego
             marker.on('click', () => {
                 openSidePanel(bubble.id, bubble);
             });
