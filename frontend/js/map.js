@@ -1,7 +1,7 @@
-import { auth } from './api/firebase-config.js';
-import { authModal } from './ui/auth.js';
-import { openSearchModal } from './ui/search.js';
-import { openSidePanel, closePanel } from './ui/panel.js';
+import { auth } from './api/firebase-config.js?v=2';
+import { authModal } from './ui/auth.js?v=2';
+import { openSearchModal } from './ui/search.js?v=2';
+import { openSidePanel, closePanel } from './ui/panel.js?v=2';
 
 const API_BASE = 'https://jawor.wzks.uj.edu.pl:32207/api';
 
