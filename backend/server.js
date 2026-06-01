@@ -332,7 +332,7 @@ const getSpotifyToken = async () => {
         return spotifyAccessToken;
     }
     const clientId = 'f7acf4a96bdf44a2bbfc82186c7c6356';
-    const clientSecret = 'TUTAJ_WKLEJ_SWOJ_CLIENT_SECRET'; // <-- Bezpieczne miejsce
+    const clientSecret = 'f214ff529c88461f9ce3ab2722c8aa3b'; // <-- Bezpieczne miejsce
     
     // Kodowanie Base64 dla NodeJS
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
