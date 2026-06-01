@@ -2,7 +2,7 @@ import { auth } from '../api/firebase-config.js';
 import { updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { loadFriends, checkIsFriend, toggleFriendInDB } from './friends.js';
 
-const API_BASE = 'http://jawor.wzks.uj.edu.pl:32207/api';
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/backend_mapy/api';
 const DEFAULT_AVATAR = 'img/default-avatar.jpg';
 
 const profilePanel = document.getElementById('profile-panel');

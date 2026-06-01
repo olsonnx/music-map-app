@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthState
 // Usunięto importy firebase-firestore
 import { hideProfilePanel } from './profile.js'; 
 
-const API_BASE = 'http://jawor.wzks.uj.edu.pl:32207/api'; 
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/backend_mapy/api';
 
 const openAuthBtn = document.getElementById('open-auth-btn');
 const userMenu = document.getElementById('user-menu');

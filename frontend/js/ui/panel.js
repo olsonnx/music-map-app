@@ -3,7 +3,7 @@ import { loadRatings, clearRatings } from './ratings.js';
 import { loadComments, clearComments } from './comments.js';
 import { showUserProfile } from './profile.js';
 
-const API_BASE = 'http://jawor.wzks.uj.edu.pl:32207/api';
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/backend_mapy/api';
 
 const sidePanel = document.getElementById('side-panel');
 const closePanelBtn = document.getElementById('close-panel-btn');
