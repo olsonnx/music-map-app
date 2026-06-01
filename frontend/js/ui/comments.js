@@ -2,7 +2,7 @@ import { auth } from '../api/firebase-config.js';
 import { authModal } from './auth.js';
 import { showUserProfile } from './profile.js';
 
-const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/backend_mapy/api';
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/frontend/frontend/api';
 
 const commentsList = document.getElementById('comments-list');
 const commentInput = document.getElementById('comment-input');
