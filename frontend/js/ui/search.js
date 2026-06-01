@@ -33,7 +33,7 @@ spotifySearchInput.addEventListener('input', (e) => {
             console.error("Błąd wyszukiwania: ", e);
         }
     }, 500);
-    
+});    
 function renderSpotifyResults(tracks) {
     spotifyResults.innerHTML = '';
     tracks.forEach(track => {
