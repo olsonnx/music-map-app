@@ -367,6 +367,55 @@ body.light-mode .leaflet-tile-pane {
     filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(1.1);
 }
 
+/* --- PRZYCISKI DOSTĘPNOŚCI (A11Y) --- */
+.font-controls {
+    display: flex;
+    gap: 5px;
+    background: #121212;
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid #282828;
+}
+
+.font-controls button {
+    flex: 1;
+    background: #1f1f1f;
+    color: #aaa;
+    border: none;
+    padding: 8px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.font-controls button:hover {
+    background: #282828;
+    color: #1DB954;
+    transform: translateY(-1px);
+}
+
+.font-controls button:active {
+    transform: translateY(1px);
+}
+
+/* Wariant dla trybu jasnego */
+body.light-mode .font-controls {
+    background: #eef0f2;
+    border-color: #ddd;
+}
+
+body.light-mode .font-controls button {
+    background: #fff;
+    color: #555;
+    border: 1px solid #ccc;
+}
+
+body.light-mode .font-controls button:hover {
+    background: #ebebeb;
+    color: #1DB954;
+}
+
 /* --- ZMIENNA BAZOWA DLA CZCIONKI --- */
 :root {
     --base-font-size: 14px;
