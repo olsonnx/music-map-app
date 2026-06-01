@@ -240,7 +240,10 @@ app.post('/api/favorites', async (req, res) => {
         const { userId, songKey, songName, artistName, coverUrl } = req.body;
         await pool.execute('INSERT IGNORE INTO favorites (userId, songKey, songName, artistName, coverUrl) VALUES (?, ?, ?, ?, ?)', [userId, songKey, songName, artistName, coverUrl]);
         res.status(200).json({ message: 'Dodano do ulubionych' });
-    } catch (error) { res.status(500).json({ error: 'Błąd dodawania do ulubionych' }); }
+    } catch (error) { 
+        console.error("Błąd MySQL (dodawanie ulubionych):", error);
+        res.status(500).json({ error: 'Błąd dodawania do ulubionych' }); 
+    }
 });
 
 // Usuwanie z ulubionych (DELETE)
@@ -249,26 +252,31 @@ app.delete('/api/favorites', async (req, res) => {
         const { userId, songKey } = req.body;
         await pool.execute('DELETE FROM favorites WHERE userId = ? AND songKey = ?', [userId, songKey]);
         res.status(200).json({ message: 'Usunięto z ulubionych' });
-    } catch (error) { res.status(500).json({ error: 'Błąd usuwania' }); }
+    } catch (error) { 
+        console.error("Błąd MySQL (usuwanie ulubionych):", error);
+        res.status(500).json({ error: 'Błąd usuwania' }); 
+    }
 });
 
-// 1. SPRAWDZANIE CZY UTWÓR JEST W ULUBIONYCH (Musi być przed /:userId!)
+// SPRAWDZANIE CZY UTWÓR JEST W ULUBIONYCH 
 app.get('/api/favorites/check', async (req, res) => {
     try {
         const { userId, songKey } = req.query;
         const [rows] = await pool.execute('SELECT * FROM favorites WHERE userId = ? AND songKey = ?', [userId, songKey]);
         res.status(200).json({ isFavorited: rows.length > 0 });
     } catch (error) {
+        console.error("Błąd MySQL (sprawdzanie ulubionych):", error);
         res.status(500).json({ error: 'Błąd sprawdzania ulubionych' });
     }
 });
 
-// 2. POBIERANIE LISTY ULUBIONYCH
+// POBIERANIE LISTY ULUBIONYCH
 app.get('/api/favorites/:userId', async (req, res) => {
     try {
         const [rows] = await pool.execute('SELECT * FROM favorites WHERE userId = ? ORDER BY timestamp DESC', [req.params.userId]);
         res.status(200).json(rows);
     } catch (error) {
+        console.error("Błąd MySQL (pobieranie listy ulubionych):", error);
         res.status(500).json({ error: 'Błąd pobierania ulubionych' });
     }
 });
