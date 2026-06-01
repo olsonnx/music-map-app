@@ -366,3 +366,46 @@ body.light-mode #theme-label { color: #555; }
 body.light-mode .leaflet-tile-pane {
     filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(1.1);
 }
+
+/* --- ZMIENNA BAZOWA DLA CZCIONKI --- */
+:root {
+    --base-font-size: 14px;
+}
+
+/* Wymuszenie dziedziczenia zmiennej na całej stronie */
+body {
+    font-size: var(--base-font-size);
+}
+button, input, textarea, p, span, div {
+    font-size: inherit;
+}
+
+/* --- TRYB WYSOKIEGO KONTRASTU (WCAG) --- */
+body.high-contrast,
+body.high-contrast #side-panel,
+body.high-contrast #menu-panel,
+body.high-contrast #profile-panel,
+body.high-contrast .modal-content {
+    background-color: #000 !important;
+    color: #ffcc00 !important;
+    border-color: #ffcc00 !important;
+}
+
+body.high-contrast button {
+    background-color: #ffcc00 !important;
+    color: #000 !important;
+    border: 2px solid #ffcc00 !important;
+    font-weight: bold !important;
+}
+
+body.high-contrast input,
+body.high-contrast textarea {
+    background-color: #000 !important;
+    color: #ffcc00 !important;
+    border: 2px solid #ffcc00 !important;
+}
+
+body.high-contrast .prof-link {
+    color: #fff !important;
+    text-decoration: underline !important;
+}
