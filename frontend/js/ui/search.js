@@ -2,7 +2,7 @@ import { auth } from '../api/firebase-config.js';
 import { searchSpotify } from '../api/spotify.js';
 import { loadBubbles } from '../map.js'; 
 
-const API_BASE = 'https://jawor.wzks.uj.edu.pl/22_ruszkowski/backend_mapy/api';
+const API_BASE = 'https://jawor.wzks.uj.edu.pl:32207/api';
 
 const searchModal = document.getElementById('search-modal');
 const closeSearchBtn = document.getElementById('close-search-btn');
