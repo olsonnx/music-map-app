@@ -321,6 +321,71 @@ app.post('/api/ratings', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Błąd zapisywania oceny' }); }
 });
 
+// ==========================================
+//               SPOTIFY API
+// ==========================================
+let spotifyAccessToken = null;
+let spotifyTokenExpiration = 0;
+
+const getSpotifyToken = async () => {
+    if (spotifyAccessToken && Date.now() < spotifyTokenExpiration) {
+        return spotifyAccessToken;
+    }
+    const clientId = 'f7acf4a96bdf44a2bbfc82186c7c6356';
+    const clientSecret = 'TUTAJ_WKLEJ_SWOJ_CLIENT_SECRET'; // <-- Bezpieczne miejsce
+    
+    // Kodowanie Base64 dla NodeJS
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+    const response = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Basic ${credentials}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'grant_type=client_credentials'
+    });
+    
+    const data = await response.json();
+    spotifyAccessToken = data.access_token;
+    spotifyTokenExpiration = Date.now() + (data.expires_in * 1000) - 60000;
+    
+    return spotifyAccessToken;
+};
+
+// Nowy endpoint wyszukiwania dla frontendu
+app.get('/api/spotify/search', async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query) return res.status(400).json({ error: 'Brak zapytania' });
+        
+        const token = await getSpotifyToken();
+        const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=5`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const data = await response.json();
+        res.status(200).json(data.tracks.items);
+    } catch (error) {
+        console.error("Błąd Spotify API:", error);
+        res.status(500).json({ error: 'Błąd pobierania danych ze Spotify' });
+    }
+});
+
+// ==========================================
+//           KONFIGURACJA FIREBASE
+// ==========================================
+app.get('/api/config/firebase', (req, res) => {
+    res.status(200).json({
+        apiKey: "AIzaSyCAsLKTrSPuoyMOUaNRZ3P9rtYvfRNFdgU",
+        authDomain: "music-map-app-ar.firebaseapp.com",
+        projectId: "music-map-app-ar",
+        storageBucket: "music-map-app-ar.firebasestorage.app",
+        messagingSenderId: "432711468617",
+        appId: "1:432711468617:web:3ac6dffbad4b73eb08a198"
+    });
+});
+
 
 // ==========================================
 //           URUCHOMIENIE SERWERA

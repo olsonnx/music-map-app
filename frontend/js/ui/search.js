@@ -1,5 +1,4 @@
 import { auth } from '../api/firebase-config.js'; 
-import { searchSpotify } from '../api/spotify.js';
 import { loadBubbles } from '../map.js'; 
 
 const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/frontend/frontend/api';
@@ -26,11 +25,15 @@ spotifySearchInput.addEventListener('input', (e) => {
     if (queryStr.length < 2) { spotifyResults.innerHTML = ''; return; }
     
     searchTimeout = setTimeout(async () => {
-        const tracks = await searchSpotify(queryStr);
-        renderSpotifyResults(tracks);
+        try {
+            const response = await fetch(`${API_BASE}/spotify/search?q=${encodeURIComponent(queryStr)}`);
+            const tracks = await response.json();
+            renderSpotifyResults(tracks);
+        } catch(e) {
+            console.error("Błąd wyszukiwania: ", e);
+        }
     }, 500);
-});
-
+    
 function renderSpotifyResults(tracks) {
     spotifyResults.innerHTML = '';
     tracks.forEach(track => {
