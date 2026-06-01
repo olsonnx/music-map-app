@@ -9,9 +9,9 @@ app.use(express.json());
 // 1. KONFIGURACJA POŁĄCZENIA Z BAZĄ MYSQL
 const pool = mysql.createPool({
     host: 'localhost', 
-    user: 'TWOJ_LOGIN',          // Twój login do phpMyAdmin (zazwyczaj indeks)
-    password: 'TWOJE_HASLO',     // Nowe hasło, które zmieniłeś
-    database: 'TWOJ_LOGIN',      // Nazwa Twojej bazy to zazwyczaj Twój login
+    user: '22_ruszkowski',          
+    password: 'P4s2m3d9h7',     
+    database: '22_ruszkowski',      
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -20,7 +20,7 @@ const pool = mysql.createPool({
 // 2. ENDPOINT: Pobieranie wszystkich baniek na mapę (GET)
 app.get('/api/bubbles', async (req, res) => {
     try {
-        // Zamiast Firebase getDocs, robimy zapytanie SQL (z dołączeniem nicku autora)
+        
         const [rows] = await pool.execute(`
             SELECT b.*, u.userName 
             FROM bubbles b 
@@ -61,6 +61,38 @@ app.patch('/api/comments/:id', async (req, res) => {
     } catch (error) {
         console.error("Błąd usuwania komentarza:", error);
         res.status(500).json({ error: 'Błąd bazy danych' });
+    }
+});
+
+// ENDPOINT: Pobieranie komentarzy dla danej bańki (GET)
+app.get('/api/comments/:bubbleId', async (req, res) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT c.*, u.userName 
+            FROM comments c 
+            JOIN users u ON c.userId = u.id 
+            WHERE c.bubbleId = ? 
+            ORDER BY c.timestamp ASC
+        `, [req.params.bubbleId]);
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error("Błąd pobierania komentarzy:", error);
+        res.status(500).json({ error: 'Błąd pobierania komentarzy' });
+    }
+});
+
+// ENDPOINT: Dodawanie nowego komentarza (POST)
+app.post('/api/comments', async (req, res) => {
+    try {
+        const { bubbleId, userId, text } = req.body;
+        await pool.execute(
+            'INSERT INTO comments (bubbleId, userId, text) VALUES (?, ?, ?)',
+            [bubbleId, userId, text]
+        );
+        res.status(201).json({ message: 'Komentarz dodany' });
+    } catch (error) {
+        console.error("Błąd dodawania komentarza:", error);
+        res.status(500).json({ error: 'Błąd dodawania komentarza' });
     }
 });
 
@@ -167,7 +199,7 @@ app.get('/api/favorites/:userId', async (req, res) => {
 
 // URUCHOMIENIE SERWERA
 // Używamy zmiennej środowiskowej, żeby na uczelni podać port od administratora
-const PORT = process.env.PORT || 3000; 
+const PORT = 32207; 
 app.listen(PORT, () => {
     console.log(`Serwer API działa na porcie ${PORT}`);
 });
