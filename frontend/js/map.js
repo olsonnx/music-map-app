@@ -3,7 +3,7 @@ import { authModal } from './ui/auth.js';
 import { openSearchModal } from './ui/search.js';
 import { openSidePanel, closePanel } from './ui/panel.js';
 
-const API_BASE = 'https://jawor.wzks.uj.edu.pl:32207/api';
+const API_BASE = 'http://jawor.wzks.uj.edu.pl:32207/api';
 
 const bounds = [[-90, -180], [90, 180]];
 const map = L.map('map', { 

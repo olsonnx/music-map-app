@@ -1,7 +1,7 @@
 import { auth } from '../api/firebase-config.js';
 import { authModal } from './auth.js';
 
-const API_BASE = 'https://jawor.wzks.uj.edu.pl:32207/api';
+const API_BASE = 'http://jawor.wzks.uj.edu.pl:32207/api';
 
 const ratingSection = document.getElementById('rating-section');
 const stars = document.querySelectorAll('.star');
