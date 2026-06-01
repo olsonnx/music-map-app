@@ -197,8 +197,96 @@ app.get('/api/favorites/:userId', async (req, res) => {
     }
 });
 
+// ENDPOINT: Synchronizacja użytkownika po zalogowaniu/rejestracji
+app.post('/api/users/sync', async (req, res) => {
+    try {
+        const { id, userName, photoURL } = req.body;
+        // INSERT IGNORE nie wywali błędu, jeśli user loguje się kolejny raz
+        await pool.execute(
+            'INSERT IGNORE INTO users (id, userName, photoURL) VALUES (?, ?, ?)',
+            [id, userName, photoURL]
+        );
+        res.status(200).json({ message: 'Użytkownik zsynchronizowany' });
+    } catch (error) {
+        console.error("Błąd synchronizacji:", error);
+        res.status(500).json({ error: 'Błąd bazy danych' });
+    }
+});
+
+// ENDPOINT: USUWANIE BAŃKI Z MAPY
+app.delete('/api/bubbles/:id', async (req, res) => {
+    try {
+        await pool.execute('DELETE FROM bubbles WHERE id = ?', [req.params.id]);
+        res.status(200).json({ message: 'Bańka usunięta' });
+    } catch (error) {
+        res.status(500).json({ error: 'Błąd usuwania bańki' });
+    }
+});
+
+// ENDOINT: SPRAWDZANIE CZY UTWÓR JEST W ULUBIONYCH 
+app.get('/api/favorites/check', async (req, res) => {
+    try {
+        const { userId, songKey } = req.query;
+        const [rows] = await pool.execute('SELECT * FROM favorites WHERE userId = ? AND songKey = ?', [userId, songKey]);
+        res.status(200).json({ isFavorited: rows.length > 0 });
+    } catch (error) {
+        res.status(500).json({ error: 'Błąd sprawdzania ulubionych' });
+    }
+});
+
+// ENDPOINT: DODAWANIE/USUWANIE ULUBIONYCH (TOGGLE)
+app.post('/api/favorites', async (req, res) => {
+    try {
+        const { userId, songKey, songName, artistName, coverUrl } = req.body;
+        await pool.execute('INSERT IGNORE INTO favorites (userId, songKey, songName, artistName, coverUrl) VALUES (?, ?, ?, ?, ?)', [userId, songKey, songName, artistName, coverUrl]);
+        res.status(200).json({ message: 'Dodano do ulubionych' });
+    } catch (error) { res.status(500).json({ error: 'Błąd dodawania do ulubionych' }); }
+});
+
+app.delete('/api/favorites', async (req, res) => {
+    try {
+        const { userId, songKey } = req.body;
+        await pool.execute('DELETE FROM favorites WHERE userId = ? AND songKey = ?', [userId, songKey]);
+        res.status(200).json({ message: 'Usunięto z ulubionych' });
+    } catch (error) { res.status(500).json({ error: 'Błąd usuwania' }); }
+});
+
+// ENDPOINT: POBIERANIE OCEN UTWORU
+app.get('/api/ratings/:spotifyId', async (req, res) => {
+    try {
+        const spotifyId = req.params.spotifyId;
+        const userId = req.query.userId || null;
+        
+        const [rows] = await pool.execute('SELECT rating, userId FROM song_ratings WHERE spotifyId = ?', [spotifyId]);
+        
+        let totalScore = 0;
+        let userVote = 0;
+        rows.forEach(r => {
+            totalScore += r.rating;
+            if (userId && r.userId === userId) userVote = r.rating;
+        });
+
+        const votesCount = rows.length;
+        const average = votesCount > 0 ? (totalScore / votesCount).toFixed(1) : 0;
+        
+        res.status(200).json({ average, votesCount, userVote });
+    } catch (error) { res.status(500).json({ error: 'Błąd pobierania ocen' }); }
+});
+
+// ENDPOINT: GŁOSOWANIE NA UTWÓR
+app.post('/api/ratings', async (req, res) => {
+    try {
+        const { spotifyId, userId, rating } = req.body;
+        await pool.execute(`
+            INSERT INTO song_ratings (spotifyId, userId, rating) 
+            VALUES (?, ?, ?) 
+            ON DUPLICATE KEY UPDATE rating = ?
+        `, [spotifyId, userId, rating, rating]);
+        res.status(200).json({ message: 'Zapisano ocenę' });
+    } catch (error) { res.status(500).json({ error: 'Błąd zapisywania oceny' }); }
+});
+
 // URUCHOMIENIE SERWERA
-// Używamy zmiennej środowiskowej, żeby na uczelni podać port od administratora
 const PORT = 32207; 
 app.listen(PORT, () => {
     console.log(`Serwer API działa na porcie ${PORT}`);

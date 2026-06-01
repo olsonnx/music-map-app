@@ -1,8 +1,9 @@
-import { auth, db } from '../api/firebase-config.js';
+import { auth } from '../api/firebase-config.js'; 
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-// NOWOŚĆ: Dodane funkcje do przeszukiwania bazy (collection, query, where, getDocs)
-import { doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// Usunięto importy firebase-firestore
 import { hideProfilePanel } from './profile.js'; 
+
+const API_BASE = 'https://jawor.wzks.uj.edu.pl:32207/api'; 
 
 const openAuthBtn = document.getElementById('open-auth-btn');
 const userMenu = document.getElementById('user-menu');
@@ -66,34 +67,30 @@ actionBtn.addEventListener('click', async () => {
         actionBtn.textContent = "Sprawdzanie nazwy...";
 
         try {
-            // --- STRAŻNIK UNIKALNOŚCI NICKU ---
-            const usersRef = collection(db, "users");
-            const q = query(usersRef, where("usernameLower", "==", username.toLowerCase()));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
+            // SPRAWDZAMY W MYSQL CZY NICK JEST ZAJĘTY
+            const checkRes = await fetch(`${API_BASE}/users/find?nick=${username.toLowerCase()}`);
+            if (checkRes.ok) { 
                 alert("Ta nazwa użytkownika jest już zajęta. Wybierz inną!");
                 actionBtn.textContent = "Zarejestruj nowe konto";
-                return; // Przerywamy rejestrację!
+                return; 
             }
 
             actionBtn.textContent = "Tworzenie konta...";
 
-            // 1. Tworzymy użytkownika w systemie autoryzacji
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             
-            // 2. Dodajemy nick do obiektu użytkownika
             await updateProfile(user, { displayName: username });
 
-            // 3. TWORZYMY PEŁNY DOKUMENT W BAZIE FIRESTORE
-            await setDoc(doc(db, "users", user.uid), {
-                username: username,
-                usernameLower: username.toLowerCase(),
-                bio: "",
-                photoURL: "",
-                friends: [],
-                favorites: []
+            // ZAPISUJEMY UŻYTKOWNIKA DO MYSQL ZAMIAST FIRESTORE
+            await fetch(`${API_BASE}/users/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: user.uid,
+                    userName: username,
+                    photoURL: ""
+                })
             });
 
             userNameDisplay.textContent = "@" + username;
@@ -116,12 +113,17 @@ onAuthStateChanged(auth, async (user) => {
         
         if (user.displayName) {
             try {
-                await setDoc(doc(db, "users", user.uid), {
-                    username: user.displayName,
-                    usernameLower: user.displayName.toLowerCase(),
-                    photoURL: user.photoURL || ""
-                }, { merge: true });
-            } catch (e) { console.error("Błąd zapisu danych usera: ", e); }
+                // Przy każdym logowaniu upewniamy się, że użytkownik jest w MySQL
+                await fetch(`${API_BASE}/users/sync`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: user.uid,
+                        userName: user.displayName,
+                        photoURL: user.photoURL || ""
+                    })
+                });
+            } catch (e) { console.error("Błąd synchronizacji usera: ", e); }
         }
     } else {
         openAuthBtn.style.display = 'block';
