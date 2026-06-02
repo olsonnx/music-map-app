@@ -215,7 +215,7 @@ app.get('/api/friends/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
         const [friends] = await pool.execute(`
-            SELECT f.friendId, u.userName, 
+            SELECT f.friendId, u.userName, u.photoURL, 
                    (SELECT COUNT(*) FROM friends f2 WHERE f2.userId = f.friendId AND f2.friendId = ?) as isMutual
             FROM friends f
             JOIN users u ON f.friendId = u.id

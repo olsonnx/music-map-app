@@ -66,7 +66,7 @@ export async function loadFriends() {
         friendsList.innerHTML = ''; 
         
         for (const fData of friends) {
-            const fPic = fData.avatar || DEFAULT_AVATAR; 
+            const fPic = fData.photoURL || DEFAULT_AVATAR; 
             const fName = fData.userName || "Nieznany";
             const fid = fData.friendId;
             
