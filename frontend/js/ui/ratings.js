@@ -79,7 +79,7 @@ stars.forEach(star => {
                     rating: ratingVal
                 })
             });
-            // Po zagłosowaniu, natychmiast odświeżamy widok ocen
+            // Odświeżanie po zagłosowaniu
             fetchAndDisplayRatings(currentSpotifyId);
         } catch (error) { console.error("Błąd zapisywania oceny:", error); }
     });

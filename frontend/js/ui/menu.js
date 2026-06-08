@@ -84,7 +84,7 @@ const updateFontSize = (size) => {
     localStorage.setItem('fontSize', currentFontSize);
 };
 
-// Limity wielkości: min 12px, max 24px
+// Limity wielkości
 if (fontDecreaseBtn) fontDecreaseBtn.addEventListener('click', () => updateFontSize(Math.max(12, currentFontSize - 2)));
 if (fontResetBtn) fontResetBtn.addEventListener('click', () => updateFontSize(14));
 if (fontIncreaseBtn) fontIncreaseBtn.addEventListener('click', () => updateFontSize(Math.min(24, currentFontSize + 2)));
