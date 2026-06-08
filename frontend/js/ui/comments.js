@@ -8,15 +8,19 @@ const commentsList = document.getElementById('comments-list');
 const commentInput = document.getElementById('comment-input');
 const addCommentBtn = document.getElementById('add-comment-btn');
 
+// Przechowujemy ID aktualnie wyświetlanego "dymka" (bubble)
 let currentBubbleId = null;
 
+// Konfiguracja licznika znaków
 const MAX_CHARS = 140;
 let charCounter = null;
 
+// Inicjalizacja licznika znaków przy polu wpisywania
 if (commentInput) {
     commentInput.setAttribute('maxlength', MAX_CHARS);
     commentInput.placeholder = `Napisz komentarz...`;
     
+    // Tworzenie elementu wyświetlającego liczbę znaków
     charCounter = document.createElement('div');
     charCounter.style.fontSize = '11px';
     charCounter.style.color = '#888';
@@ -29,6 +33,7 @@ if (commentInput) {
     const inputArea = commentInput.parentNode;
     inputArea.parentNode.insertBefore(charCounter, inputArea.nextSibling);
 
+    // Aktualizacja licznika podczas pisania
     commentInput.addEventListener('input', () => {
         const len = commentInput.value.length;
         charCounter.textContent = `${len} / ${MAX_CHARS}`;
@@ -36,6 +41,7 @@ if (commentInput) {
     });
 }
 
+// Funkcja czyszcząca formularz komentarzy
 export const clearComments = () => {
     if (commentInput) commentInput.value = '';
     if (charCounter) {
@@ -44,6 +50,7 @@ export const clearComments = () => {
     }
 };
 
+// Funkcja pobierająca i renderująca listę komentarzy dla konkretnego dymka
 export const loadComments = async (bubbleId) => {
     currentBubbleId = bubbleId;
     commentsList.innerHTML = '<p style="color: #666; font-size: 13px; text-align: center; margin-top: 20px;">Ładowanie komentarzy...</p>';
@@ -52,19 +59,23 @@ export const loadComments = async (bubbleId) => {
         const response = await fetch(`${API_BASE}/comments/${bubbleId}`);
         const comments = await response.json();
 
+        // Jeśli brak komentarzy, wyświetlamy stosowny komunikat
         commentsList.innerHTML = '';
         if (comments.length === 0) {
             commentsList.innerHTML = '<p style="color: #666; font-size: 13px; text-align: center; margin-top: 20px;">Brak komentarzy. Bądź pierwszy!</p>';
             return;
         }
         
+        // Renderowanie poszczególnych komentarzy
         comments.forEach((commentData) => {
             const div = document.createElement('div');
             div.className = 'comment-item';
             
+            // Obsługa wyświetlania usuniętych komentarzy
             if (commentData.isDeleted) {
                 div.innerHTML = `<span class="comment-text" style="color: #888; font-style: italic; font-size: 13px;">[ Ten komentarz został usunięty ]</span>`;
             } else {
+                // Sprawdzamy czy komentarz należy do zalogowanego użytkownika (żeby dodać opcję usuwania)
                 const isMine = auth.currentUser && auth.currentUser.uid === commentData.userId;
                 
                 const deleteBtnHtml = isMine 
@@ -87,7 +98,9 @@ export const loadComments = async (bubbleId) => {
     }
 };
 
+// Funkcja obsługująca dodawanie nowego komentarza
 const submitComment = async () => {
+    // Sprawdzenie czy użytkownik jest zalogowany
     if (!auth.currentUser) { authModal.classList.add('active'); return; }
     
     const text = commentInput.value.trim();
@@ -99,6 +112,7 @@ const submitComment = async () => {
     }
 
     try {
+        // Wysyłamy komentarz do API
         const response = await fetch(`${API_BASE}/comments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -111,24 +125,29 @@ const submitComment = async () => {
 
         if (!response.ok) throw new Error('Błąd dodawania komentarza');
         
+        // Czyścimy pole po dodaniu
         commentInput.value = ''; 
         if (charCounter) {
             charCounter.textContent = `0 / ${MAX_CHARS}`;
             charCounter.style.color = '#888';
         }
 
+        // Odświeżamy listę komentarzy
         loadComments(currentBubbleId);
 
     } catch (error) { console.error("Błąd dodawania komentarza:", error); }
 };
 
+// Listenery dla przycisku dodawania i klawisza Enter
 addCommentBtn.addEventListener('click', submitComment);
 commentInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') submitComment();
 });
 
+// Obsługa kliknięć w listę komentarzy (przejście do profilu lub usuwanie)
 if (commentsList) {
     commentsList.addEventListener('click', async (e) => {
+        // Kliknięcie w autora -> profil
         const profileLink = e.target.closest('.prof-link');
         if (profileLink) {
             const uid = profileLink.getAttribute('data-uid');
@@ -136,6 +155,7 @@ if (commentsList) {
             return;
         }
 
+        // Kliknięcie w przycisk usuwania (X)
         const deleteBtn = e.target.closest('.delete-comment-btn');
         if (deleteBtn && currentBubbleId) {
             const commentId = deleteBtn.getAttribute('data-id');
@@ -143,6 +163,7 @@ if (commentsList) {
             
             if (confirmDelete) {
                 try {
+                    // Wykonujemy patch na API, żeby oznaczyć komentarz jako usunięty
                     const response = await fetch(`${API_BASE}/comments/${commentId}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },

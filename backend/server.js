@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2/promise'); // Używamy wersji promise dla asynchroniczności (async/await)
+const mysql = require('mysql2/promise'); // promise dla asynchroniczności (async/await)
 
 const app = express();
 app.use(cors());
@@ -134,7 +134,7 @@ app.post('/api/users/sync', async (req, res) => {
     }
 });
 
-// 1. ZNAJDOWANIE PO NICKU (Musi być przed /:id!)
+// 1. ZNAJDOWANIE PO NICKU
 app.get('/api/users/find', async (req, res) => {
     try {
         const [rows] = await pool.execute(
@@ -196,7 +196,7 @@ app.delete('/api/friends', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Błąd bazy' }); }
 });
 
-// 1. SPRAWDZANIE CZY JEST ZNAJOMYM (Musi być przed /:userId!)
+// 1. SPRAWDZANIE CZY JEST ZNAJOMYM
 app.get('/api/friends/check', async (req, res) => {
     try {
         const { userId, friendId } = req.query;
@@ -332,7 +332,7 @@ const getSpotifyToken = async () => {
         return spotifyAccessToken;
     }
     const clientId = 'f7acf4a96bdf44a2bbfc82186c7c6356';
-    const clientSecret = 'f214ff529c88461f9ce3ab2722c8aa3b'; // <-- Bezpieczne miejsce
+    const clientSecret = 'f214ff529c88461f9ce3ab2722c8aa3b';
     
     // Kodowanie Base64 dla NodeJS
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -353,7 +353,7 @@ const getSpotifyToken = async () => {
     return spotifyAccessToken;
 };
 
-// Nowy endpoint wyszukiwania dla frontendu
+// endpoint wyszukiwania dla frontendu
 app.get('/api/spotify/search', async (req, res) => {
     try {
         const query = req.query.q;

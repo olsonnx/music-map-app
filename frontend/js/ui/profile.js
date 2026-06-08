@@ -27,11 +27,11 @@ const sectionFriends = document.getElementById('section-friends');
 const sectionFavorites = document.getElementById('section-favorites'); 
 const favoritesList = document.getElementById('favorites-list'); 
 
-
 let currentViewedUserId = null;
 let isAlreadyFriend = false;
 let isMutual = false;
 
+// Aktualizuje wygląd przycisku znajomych w zależności od statusu relacji
 const updateFriendBtnUI = (isFriend, isMutual) => {
     if (isFriend) {
         profileActionBtn.textContent = isMutual ? "Usuń (Jesteście Mutuals 🤝)" : "Usuń ze znajomych";
@@ -42,6 +42,7 @@ const updateFriendBtnUI = (isFriend, isMutual) => {
     }
 };
 
+// Pobiera listę ulubionych utworów użytkownika z bazy i wyświetla je
 async function loadFavorites(uid) {
     if (!favoritesList) return;
     favoritesList.innerHTML = '<p style="color: #aaa; font-size: 13px; text-align: center;">Ładowanie...</p>';
@@ -75,6 +76,7 @@ async function loadFavorites(uid) {
     }
 }
 
+// Główna funkcja ładująca profil: sprawdza czy to "mój" profil czy gościa i ustawia widoki
 export async function showUserProfile(uid) {
     if (!uid) return;
 
@@ -97,6 +99,7 @@ export async function showUserProfile(uid) {
             const data = await response.json();
             profileAvatarPreview.src = data.photoURL || DEFAULT_AVATAR;
 
+            // Jeśli to mój profil to pokazujemy edycję
             if (isMe) {
                 profileNameTitle.textContent = "@" + (data.userName || "Użytkownik");
                 myProfileEdit.style.display = 'block';
@@ -108,6 +111,7 @@ export async function showUserProfile(uid) {
                 tabFavorites.style.display = 'block'; 
                 tabEdit.textContent = "Edytuj profil";
             } else {
+                // Jeśli profil gościa to pokazujemy informacje i przycisk dodawania do znajomych
                 myProfileEdit.style.display = 'none';
                 guestProfileView.style.display = 'block';
                 guestBio.textContent = data.bio || "Ten użytkownik nie dodał jeszcze opisu.";
@@ -135,6 +139,7 @@ export async function showUserProfile(uid) {
     }
 }
 
+// Obsługa przycisku Dodaj/Usuń ze znajomych
 if (profileActionBtn) {
     profileActionBtn.addEventListener('click', async () => {
         if (!currentViewedUserId || !auth.currentUser) return;
@@ -151,6 +156,7 @@ if (profileActionBtn) {
     });
 }
 
+// Logika przełączania zakładek w panelu profilu
 const tabs = [
     { btn: tabEdit, sec: sectionEdit, action: null },
     { btn: tabFriends, sec: sectionFriends, action: loadFriends },
@@ -171,6 +177,7 @@ tabs.forEach(t => {
     }
 });
 
+// Kliknięcie w nazwę użytkownika na głównej stronie otwiera jego profil
 const userNameDisplay = document.getElementById('user-name-display');
 if (userNameDisplay) {
     userNameDisplay.addEventListener('click', () => {
@@ -178,6 +185,7 @@ if (userNameDisplay) {
     });
 }
 
+// Funkcja pomocnicza do ukrywania panelu profilu
 export const hideProfilePanel = () => {
     if (profilePanel) profilePanel.classList.remove('active');
 };
@@ -185,6 +193,7 @@ export const hideProfilePanel = () => {
 const closeProfileBtn = document.getElementById('close-profile-btn');
 if (closeProfileBtn) closeProfileBtn.addEventListener('click', hideProfilePanel);
 
+// Zapisywanie zmian w profilu do Firebase i API
 if (saveProfileBtn) {
     saveProfileBtn.addEventListener('click', async () => {
         if (!auth.currentUser) return;
@@ -212,6 +221,7 @@ if (saveProfileBtn) {
     });
 }
 
+// Obsługa resetu hasła poprzez e-mail
 if (resetPasswordBtn) {
     resetPasswordBtn.addEventListener('click', async () => {
         if (!auth.currentUser || !auth.currentUser.email) return;

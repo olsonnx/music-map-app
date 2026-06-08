@@ -1,12 +1,9 @@
-// Importy niezbędnych modułów Firebase i funkcji pomocniczych
 import { auth } from '../api/firebase-config.js'; 
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { hideProfilePanel } from './profile.js'; 
 
-// Bazowy URL do naszego backendu PHP
 const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/frontend/frontend/api';
 
-// Pobranie elementów interfejsu z DOM
 const openAuthBtn = document.getElementById('open-auth-btn');
 const userMenu = document.getElementById('user-menu');
 const userNameDisplay = document.getElementById('user-name-display'); 

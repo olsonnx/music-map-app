@@ -10,15 +10,18 @@ const spotifyResults = document.getElementById('spotify-results');
 
 let currentClickLatLng = null;
 
+// Otwiera okno wyszukiwania i ustawia focus na polu tekstowym
 export const openSearchModal = (latlng) => {
     currentClickLatLng = latlng;
     searchModal.classList.add('active');
     setTimeout(() => spotifySearchInput.focus(), 100);
 };
 
+// Zamknięcie modala wyszukiwania
 closeSearchBtn.addEventListener('click', () => searchModal.classList.remove('active'));
 
 let searchTimeout;
+// Obsługa wpisywania tekstu z debouncingiem żeby nie spamić zapytaniami do API
 spotifySearchInput.addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
     const queryStr = e.target.value.trim();
@@ -26,6 +29,7 @@ spotifySearchInput.addEventListener('input', (e) => {
     
     searchTimeout = setTimeout(async () => {
         try {
+            // Zapytanie do naszego backendu który przekazuje to do API Spotify
             const response = await fetch(`${API_BASE}/spotify/search?q=${encodeURIComponent(queryStr)}`);
             const tracks = await response.json();
             renderSpotifyResults(tracks);
@@ -34,6 +38,8 @@ spotifySearchInput.addEventListener('input', (e) => {
         }
     }, 500);
 });    
+
+// Funkcja renderująca listę wyników wyszukiwania w HTML
 function renderSpotifyResults(tracks) {
     spotifyResults.innerHTML = '';
     tracks.forEach(track => {
@@ -51,6 +57,7 @@ function renderSpotifyResults(tracks) {
             </div>
         `;
 
+        // Kliknięcie w utwór wysyła go do bazy danych tworząc dymek na mapie
         div.addEventListener('click', async () => {
             try {
                 const response = await fetch(`${API_BASE}/bubbles`, {
@@ -70,6 +77,7 @@ function renderSpotifyResults(tracks) {
 
                 if (!response.ok) throw new Error('Błąd zapisu do bazy MySQL');
 
+                // Sprzątamy po dodaniu i odświeżamy mapę
                 searchModal.classList.remove('active');
                 spotifySearchInput.value = '';
                 spotifyResults.innerHTML = '';

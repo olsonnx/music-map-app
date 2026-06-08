@@ -2,17 +2,20 @@ import { auth } from '../api/firebase-config.js';
 import { showUserProfile } from './profile.js';
 
 const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/frontend/frontend/api';
+// Domyślny awatar
 const DEFAULT_AVATAR = 'img/default-avatar.jpg';
 
 const addFriendInput = document.getElementById('add-friend-input');
 const addFriendBtn = document.getElementById('add-friend-btn');
 const friendsList = document.getElementById('friends-list');
 
+// Obsługa przycisku dodawania znajomego
 if (addFriendBtn) {
     addFriendBtn.addEventListener('click', async () => {
         const nick = addFriendInput.value.trim().toLowerCase();
         if (!nick) return;
         
+        // Zabezpieczenie przed dodaniem samego siebie
         if (nick === auth.currentUser.displayName.toLowerCase()) {
             alert("Nie możesz dodać samego siebie!");
             return;
@@ -21,12 +24,14 @@ if (addFriendBtn) {
         addFriendBtn.textContent = "Szukanie...";
         
         try {
+            // Szukamy użytkownika w bazie po nicku
             const response = await fetch(`${API_BASE}/users/find?nick=${nick}`);
             
             if (!response.ok) {
                 alert("Nie znaleziono użytkownika o takim nicku.");
             } else {
                 const friendData = await response.json();
+                // Jeśli znaleziono, dodajemy do bazy znajomych
                 await toggleFriendInDB(friendData.id, true);
                 addFriendInput.value = '';
                 alert("Dodano do znajomych!");
@@ -39,6 +44,7 @@ if (addFriendBtn) {
     });
 }
 
+// Delegacja zdarzeń dla listy znajomych (przejście do profilu po kliknięciu)
 if (friendsList) {
     friendsList.addEventListener('click', (e) => {
         const link = e.target.closest('.prof-link');
@@ -49,11 +55,13 @@ if (friendsList) {
     });
 }
 
+// Główna funkcja ładująca listę znajomych użytkownika
 export async function loadFriends() {
     if (!friendsList || !auth.currentUser) return;
     friendsList.innerHTML = '<p style="color: #aaa; font-size: 13px; text-align: center;">Ładowanie...</p>';
     
     try {
+        // Pobieramy listę znajomych z backendu
         const response = await fetch(`${API_BASE}/friends/${auth.currentUser.uid}`);
         if (!response.ok) throw new Error("Błąd sieci");
         const friends = await response.json();
@@ -65,11 +73,13 @@ export async function loadFriends() {
 
         friendsList.innerHTML = ''; 
         
+        // Generujemy listę znajomych w HTML
         for (const fData of friends) {
             const fPic = fData.photoURL || DEFAULT_AVATAR; 
             const fName = fData.userName || "Nieznany";
             const fid = fData.friendId;
             
+            // Ikona jeśli to wzajemni znajomi (moots)
             const mutualBadge = fData.isMutual ? '<span class="mutual-badge" title="Wzajemni znajomi (Mutuals)">🤝</span>' : '';
             
             const friendDiv = document.createElement('div');
@@ -82,6 +92,7 @@ export async function loadFriends() {
             friendsList.appendChild(friendDiv);
         }
 
+        // Dodajemy obsługę usuwania znajomego dla wygenerowanych przycisków
         const removeBtns = document.querySelectorAll('.remove-friend-btn');
         removeBtns.forEach(btn => {
             btn.addEventListener('click', async (e) => {
@@ -98,6 +109,7 @@ export async function loadFriends() {
     }
 }
 
+// Funkcja pomocnicza sprawdzająca czy użytkownik jest już w znajomych
 export async function checkIsFriend(uid) {
     if (!auth.currentUser) return false;
     try {
@@ -110,6 +122,7 @@ export async function checkIsFriend(uid) {
     }
 }
 
+// Funkcja do dodawania lub usuwania znajomego w bazie danych
 export async function toggleFriendInDB(friendId, isAdding) {
     if (!auth.currentUser || !friendId) return;
     try {
@@ -126,6 +139,7 @@ export async function toggleFriendInDB(friendId, isAdding) {
 
         if (!response.ok) throw new Error("Błąd bazy danych");
 
+        // Odświeżamy listę po zmianie
         loadFriends(); 
     } catch (e) {
         console.error("Błąd modyfikacji bazy znajomych:", e);

@@ -9,11 +9,12 @@ const ratingInfo = document.getElementById('rating-info');
 
 let currentSpotifyId = null;
 
+// Ukrywa sekcję ocen
 export const clearRatings = () => {
     ratingSection.style.display = 'none';
 };
 
-// Funkcja pobierająca oceny i odświeżająca UI
+// Pobiera dane o ocenach z API i odświeża gwiazdki oraz tekst
 const fetchAndDisplayRatings = async (spotifyId) => {
     try {
         const url = auth.currentUser 
@@ -26,12 +27,14 @@ const fetchAndDisplayRatings = async (spotifyId) => {
         const currentUserVote = data.userVote || 0;
         const displayScore = currentUserVote > 0 ? currentUserVote : data.average;
 
+        // Podświetlamy gwiazdki na podstawie wyniku
         stars.forEach(star => {
             const starVal = parseInt(star.getAttribute('data-val'));
             if (starVal <= displayScore) star.classList.add('active');
             else star.classList.remove('active');
         });
 
+        // Aktualizujemy opis tekstowy pod gwiazdkami
         if (data.votesCount === 0) {
             ratingInfo.textContent = "Brak ocen. Bądź pierwszy!";
         } else {
@@ -44,13 +47,16 @@ const fetchAndDisplayRatings = async (spotifyId) => {
     }
 };
 
+// Wyświetla sekcję ocen dla konkretnego utworu
 export const loadRatings = (spotifyId) => {
     currentSpotifyId = spotifyId;
     ratingSection.style.display = 'block';
     fetchAndDisplayRatings(spotifyId);
 };
 
+// Obsługa interakcji z gwiazdkami
 stars.forEach(star => {
+    // Podświetlenie gwiazdek przy najechaniu myszką
     star.addEventListener('mouseover', (e) => {
         const hoverVal = parseInt(e.target.getAttribute('data-val'));
         stars.forEach(s => {
@@ -59,11 +65,14 @@ stars.forEach(star => {
         });
     });
 
+    // Powrót do standardowego koloru po zabraniu myszki
     star.addEventListener('mouseleave', () => {
         stars.forEach(s => s.style.color = ''); 
     });
 
+    // Wysyłanie oceny do bazy po kliknięciu
     star.addEventListener('click', async (e) => {
+        // Wymagamy zalogowania
         if (!auth.currentUser) { authModal.classList.add('active'); return; }
         if (!currentSpotifyId) return;
 
@@ -79,7 +88,7 @@ stars.forEach(star => {
                     rating: ratingVal
                 })
             });
-            // Odświeżanie po zagłosowaniu
+            // Odświeżamy wyświetlanie po udanym głosowaniu
             fetchAndDisplayRatings(currentSpotifyId);
         } catch (error) { console.error("Błąd zapisywania oceny:", error); }
     });
