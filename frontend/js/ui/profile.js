@@ -1,5 +1,5 @@
 import { auth } from '../api/firebase-config.js'; 
-import { updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { loadFriends, checkIsFriend, toggleFriendInDB } from './friends.js';
 
 const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/frontend/frontend/api';
@@ -12,6 +12,7 @@ const profilePicUrlInput = document.getElementById('profile-pic-url');
 const profileBioInput = document.getElementById('profile-bio');
 const saveProfileBtn = document.getElementById('save-profile-btn');
 
+const resetPasswordBtn = document.getElementById('reset-password-btn');
 const myProfileEdit = document.getElementById('my-profile-edit');
 const guestProfileView = document.getElementById('guest-profile-view');
 const guestBio = document.getElementById('guest-bio');
@@ -25,6 +26,7 @@ const sectionEdit = document.getElementById('section-edit');
 const sectionFriends = document.getElementById('section-friends');
 const sectionFavorites = document.getElementById('section-favorites'); 
 const favoritesList = document.getElementById('favorites-list'); 
+
 
 let currentViewedUserId = null;
 let isAlreadyFriend = false;
@@ -206,6 +208,25 @@ if (saveProfileBtn) {
         } catch (error) { 
             saveProfileBtn.textContent = "Błąd zapisu!"; 
             setTimeout(() => { saveProfileBtn.textContent = "Zapisz zmiany"; }, 2000);
+        }
+    });
+}
+
+if (resetPasswordBtn) {
+    resetPasswordBtn.addEventListener('click', async () => {
+        if (!auth.currentUser || !auth.currentUser.email) return;
+        
+        const confirmReset = confirm("Czy chcesz otrzymać bezpieczny e-mail od Firebase z linkiem do zmiany hasła?");
+        if (confirmReset) {
+            resetPasswordBtn.textContent = "Wysyłanie...";
+            try {
+                await sendPasswordResetEmail(auth, auth.currentUser.email);
+                alert("Wysłano! Sprawdź swoją skrzynkę e-mail, aby ustawić nowe hasło.");
+            } catch (error) {
+                console.error("Błąd wysyłania e-maila:", error);
+                alert("Wystąpił błąd podczas wysyłania linku.");
+            }
+            resetPasswordBtn.textContent = "Zmień hasło";
         }
     });
 }

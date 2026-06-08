@@ -28,6 +28,9 @@
             <input type="text" id="username-input" placeholder="Wymyśl nazwę użytkownika" style="display: none;">
             <input type="email" id="email-input" placeholder="Twój E-mail">
             <input type="password" id="password-input" placeholder="Hasło (min. 6 znaków)">
+            <div id="forgot-password-container" style="text-align: right; margin-top: -5px; margin-bottom: 15px;">
+            <span id="forgot-password-link" style="font-size: 12px; color: #1DB954; cursor: pointer;">Zapomniałeś hasła?</span>
+            </div>
             <button id="action-btn" class="modal-btn">Zaloguj się</button>
             <div class="toggle-text">
                 <span id="toggle-hint">Nie masz konta?</span> 
@@ -159,6 +162,7 @@
                 <textarea id="profile-bio" placeholder="Napisz coś o sobie..."></textarea>
                 
                 <button id="save-profile-btn" class="modal-btn" style="margin-top: 15px;">Zapisz zmiany</button>
+                <button id="reset-password-btn" class="modal-btn" style="margin-top: 10px; background: #444; color: #fff;">Zmień hasło</button>
             </div>
 
             <div id="guest-profile-view" style="display: none;">

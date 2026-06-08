@@ -1,6 +1,5 @@
 import { auth } from '../api/firebase-config.js'; 
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-// Usunięto importy firebase-firestore
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { hideProfilePanel } from './profile.js'; 
 
 const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/frontend/frontend/api';
@@ -20,6 +19,8 @@ const passwordInput = document.getElementById('password-input');
 const actionBtn = document.getElementById('action-btn');
 const toggleHint = document.getElementById('toggle-hint');
 const toggleLink = document.getElementById('toggle-link');
+const forgotPasswordContainer = document.getElementById('forgot-password-container');
+const forgotPasswordLink = document.getElementById('forgot-password-link');
 
 let isLoginMode = true;
 
@@ -60,6 +61,7 @@ actionBtn.addEventListener('click', async () => {
             alert("Błąd logowania. Sprawdź e-mail i hasło."); 
         }
         actionBtn.textContent = "Zaloguj się";
+        if (forgotPasswordContainer) forgotPasswordContainer.style.display = 'block';
     } else {
         const username = usernameInput.value.trim();
         if (!username) { alert("Musisz podać nazwę użytkownika!"); return; }
@@ -100,8 +102,26 @@ actionBtn.addEventListener('click', async () => {
             alert("Błąd rejestracji: " + error.message); 
         }
         actionBtn.textContent = "Zarejestruj nowe konto";
+        if (forgotPasswordContainer) forgotPasswordContainer.style.display = 'none';
     }
 });
+
+if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener('click', async () => {
+        const email = emailInput.value.trim();
+        if (!email) {
+            alert("Wpisz swój adres e-mail w polu powyżej, a następnie kliknij 'Zapomniałeś hasła?'.");
+            return;
+        }
+        
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert("Wysłano link do resetowania hasła! Sprawdź swoją skrzynkę odbiorczą (oraz folder SPAM).");
+        } catch (error) {
+            alert("Błąd: Nie znaleziono konta z takim adresem e-mail lub podano nieprawidłowy format.");
+        }
+    });
+}
 
 logoutBtn.addEventListener('click', () => signOut(auth));
 
