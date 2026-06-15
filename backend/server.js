@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise'); // promise dla asynchroniczności (async/await)
@@ -8,10 +9,10 @@ app.use(express.json());
 
 // 1. KONFIGURACJA POŁĄCZENIA Z BAZĄ MYSQL
 const pool = mysql.createPool({
-    host: 'localhost', 
-    user: '22_ruszkowski',          
-    password: 'P4s2m3d9h7',     
-    database: '22_ruszkowski',      
+    host: process.env.DB_HOST, 
+    user: process.env.DB_USER,          
+    password: process.env.DB_PASS,     
+    database: process.env.DB_NAME,    
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -331,8 +332,8 @@ const getSpotifyToken = async () => {
     if (spotifyAccessToken && Date.now() < spotifyTokenExpiration) {
         return spotifyAccessToken;
     }
-    const clientId = 'f7acf4a96bdf44a2bbfc82186c7c6356';
-    const clientSecret = 'f214ff529c88461f9ce3ab2722c8aa3b';
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
     
     // Kodowanie Base64 dla NodeJS
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -377,7 +378,7 @@ app.get('/api/spotify/search', async (req, res) => {
 // ==========================================
 app.get('/api/config/firebase', (req, res) => {
     res.status(200).json({
-        apiKey: "AIzaSyCAsLKTrSPuoyMOUaNRZ3P9rtYvfRNFdgU",
+        apiKey: process.env.FIREBASE_API_KEY,
         authDomain: "music-map-app-ar.firebaseapp.com",
         projectId: "music-map-app-ar",
         storageBucket: "music-map-app-ar.firebasestorage.app",
