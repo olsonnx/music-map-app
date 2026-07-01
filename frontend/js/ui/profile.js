@@ -1,8 +1,8 @@
-import { auth, db } from '../api/firebase-config.js';
-import { updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { auth } from '../api/firebase-config.js'; 
+import { updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { loadFriends, checkIsFriend, toggleFriendInDB } from './friends.js';
 
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/frontend/frontend/api';
 const DEFAULT_AVATAR = 'img/default-avatar.jpg';
 
 const profilePanel = document.getElementById('profile-panel');
@@ -12,6 +12,7 @@ const profilePicUrlInput = document.getElementById('profile-pic-url');
 const profileBioInput = document.getElementById('profile-bio');
 const saveProfileBtn = document.getElementById('save-profile-btn');
 
+const resetPasswordBtn = document.getElementById('reset-password-btn');
 const myProfileEdit = document.getElementById('my-profile-edit');
 const guestProfileView = document.getElementById('guest-profile-view');
 const guestBio = document.getElementById('guest-bio');
@@ -28,9 +29,9 @@ const favoritesList = document.getElementById('favorites-list');
 
 let currentViewedUserId = null;
 let isAlreadyFriend = false;
-let isMutual = false; // NOWOŚĆ: Śledzimy czy jest mutual
+let isMutual = false;
 
-// --- ZAKTUALIZOWANE UI PRZYCISKU ---
+// Aktualizuje wygląd przycisku znajomych w zależności od statusu relacji
 const updateFriendBtnUI = (isFriend, isMutual) => {
     if (isFriend) {
         profileActionBtn.textContent = isMutual ? "Usuń (Jesteście Mutuals 🤝)" : "Usuń ze znajomych";
@@ -41,13 +42,15 @@ const updateFriendBtnUI = (isFriend, isMutual) => {
     }
 };
 
+// Pobiera listę ulubionych utworów użytkownika z bazy i wyświetla je
 async function loadFavorites(uid) {
     if (!favoritesList) return;
     favoritesList.innerHTML = '<p style="color: #aaa; font-size: 13px; text-align: center;">Ładowanie...</p>';
     
     try {
-        const docSnap = await getDoc(doc(db, "users", uid));
-        const favs = docSnap.exists() ? (docSnap.data().favorites || []) : [];
+        const response = await fetch(`${API_BASE}/favorites/${uid}`);
+        if (!response.ok) throw new Error("Błąd sieci");
+        const favs = await response.json();
 
         if (favs.length === 0) {
             favoritesList.innerHTML = '<p style="color: #aaa; font-size: 13px; text-align: center;">Brak ulubionych utworów.</p>';
@@ -73,6 +76,7 @@ async function loadFavorites(uid) {
     }
 }
 
+// Główna funkcja ładująca profil: sprawdza czy to "mój" profil czy gościa i ustawia widoki
 export async function showUserProfile(uid) {
     if (!uid) return;
 
@@ -89,14 +93,15 @@ export async function showUserProfile(uid) {
     profileAvatarPreview.src = DEFAULT_AVATAR;
 
     try {
-        const docSnap = await getDoc(doc(db, "users", uid));
+        const response = await fetch(`${API_BASE}/users/${uid}`);
         
-        if (docSnap.exists()) {
-            const data = docSnap.data();
+        if (response.ok) {
+            const data = await response.json();
             profileAvatarPreview.src = data.photoURL || DEFAULT_AVATAR;
 
+            // Jeśli to mój profil to pokazujemy edycję
             if (isMe) {
-                profileNameTitle.textContent = "@" + (data.username || "Użytkownik");
+                profileNameTitle.textContent = "@" + (data.userName || "Użytkownik");
                 myProfileEdit.style.display = 'block';
                 guestProfileView.style.display = 'none';
                 profilePicUrlInput.value = data.photoURL || '';
@@ -106,6 +111,7 @@ export async function showUserProfile(uid) {
                 tabFavorites.style.display = 'block'; 
                 tabEdit.textContent = "Edytuj profil";
             } else {
+                // Jeśli profil gościa to pokazujemy informacje i przycisk dodawania do znajomych
                 myProfileEdit.style.display = 'none';
                 guestProfileView.style.display = 'block';
                 guestBio.textContent = data.bio || "Ten użytkownik nie dodał jeszcze opisu.";
@@ -114,14 +120,13 @@ export async function showUserProfile(uid) {
                 tabFavorites.style.display = 'block'; 
                 tabEdit.textContent = "Informacje";
 
-                // Sprawdzanie znajomych i mutuals
                 isAlreadyFriend = await checkIsFriend(uid);
                 
-                const theirFriends = data.friends || [];
-                isMutual = isAlreadyFriend && theirFriends.includes(auth.currentUser.uid);
+                const reverseCheck = await fetch(`${API_BASE}/friends/check?userId=${uid}&friendId=${auth.currentUser.uid}`);
+                const reverseData = await reverseCheck.json();
+                isMutual = isAlreadyFriend && reverseData.isFriend;
 
-                // Wyświetlenie znaczka mutuals w tytule
-                const baseName = "@" + (data.username || "Użytkownik");
+                const baseName = "@" + (data.userName || "Użytkownik");
                 profileNameTitle.innerHTML = isMutual ? `${baseName} <span class="mutual-badge" title="Wzajemni znajomi">🤝</span>` : baseName;
 
                 updateFriendBtnUI(isAlreadyFriend, isMutual);
@@ -134,6 +139,7 @@ export async function showUserProfile(uid) {
     }
 }
 
+// Obsługa przycisku Dodaj/Usuń ze znajomych
 if (profileActionBtn) {
     profileActionBtn.addEventListener('click', async () => {
         if (!currentViewedUserId || !auth.currentUser) return;
@@ -142,7 +148,6 @@ if (profileActionBtn) {
             const adding = !isAlreadyFriend;
             await toggleFriendInDB(currentViewedUserId, adding);
             isAlreadyFriend = adding;
-            // Musimy ponownie sprawdzić czy jesteśmy mutuals z bazy, ale dla płynności UI można założyć, że isMutual się nie zmieni od razu po naszej akcji (bo to od nich zależy)
             updateFriendBtnUI(isAlreadyFriend, isMutual);
         } catch (error) {
             alert("Wystąpił błąd podczas zmiany statusu.");
@@ -151,6 +156,7 @@ if (profileActionBtn) {
     });
 }
 
+// Logika przełączania zakładek w panelu profilu
 const tabs = [
     { btn: tabEdit, sec: sectionEdit, action: null },
     { btn: tabFriends, sec: sectionFriends, action: loadFriends },
@@ -171,6 +177,7 @@ tabs.forEach(t => {
     }
 });
 
+// Kliknięcie w nazwę użytkownika na głównej stronie otwiera jego profil
 const userNameDisplay = document.getElementById('user-name-display');
 if (userNameDisplay) {
     userNameDisplay.addEventListener('click', () => {
@@ -178,6 +185,7 @@ if (userNameDisplay) {
     });
 }
 
+// Funkcja pomocnicza do ukrywania panelu profilu
 export const hideProfilePanel = () => {
     if (profilePanel) profilePanel.classList.remove('active');
 };
@@ -185,6 +193,7 @@ export const hideProfilePanel = () => {
 const closeProfileBtn = document.getElementById('close-profile-btn');
 if (closeProfileBtn) closeProfileBtn.addEventListener('click', hideProfilePanel);
 
+// Zapisywanie zmian w profilu do Firebase i API
 if (saveProfileBtn) {
     saveProfileBtn.addEventListener('click', async () => {
         if (!auth.currentUser) return;
@@ -195,10 +204,12 @@ if (saveProfileBtn) {
         
         try {
             await updateProfile(auth.currentUser, { photoURL: newPhotoUrl });
-            await setDoc(doc(db, "users", auth.currentUser.uid), {
-                bio: newBio,
-                photoURL: newPhotoUrl
-            }, { merge: true });
+            
+            await fetch(`${API_BASE}/users/${auth.currentUser.uid}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bio: newBio, photoURL: newPhotoUrl })
+            });
             
             saveProfileBtn.textContent = "Zapisano!";
             profileAvatarPreview.src = newPhotoUrl || DEFAULT_AVATAR;
@@ -206,6 +217,26 @@ if (saveProfileBtn) {
         } catch (error) { 
             saveProfileBtn.textContent = "Błąd zapisu!"; 
             setTimeout(() => { saveProfileBtn.textContent = "Zapisz zmiany"; }, 2000);
+        }
+    });
+}
+
+// Obsługa resetu hasła poprzez e-mail
+if (resetPasswordBtn) {
+    resetPasswordBtn.addEventListener('click', async () => {
+        if (!auth.currentUser || !auth.currentUser.email) return;
+        
+        const confirmReset = confirm("Czy chcesz otrzymać bezpieczny e-mail od Firebase z linkiem do zmiany hasła?");
+        if (confirmReset) {
+            resetPasswordBtn.textContent = "Wysyłanie...";
+            try {
+                await sendPasswordResetEmail(auth, auth.currentUser.email);
+                alert("Wysłano! Sprawdź swoją skrzynkę e-mail, aby ustawić nowe hasło.");
+            } catch (error) {
+                console.error("Błąd wysyłania e-maila:", error);
+                alert("Wystąpił błąd podczas wysyłania linku.");
+            }
+            resetPasswordBtn.textContent = "Zmień hasło";
         }
     });
 }

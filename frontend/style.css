@@ -308,6 +308,8 @@ body.light-mode .side-panel { background: #ffffff; border-color: #ddd; }
 body.light-mode .panel-section { border-color: #eee; }
 body.light-mode h2, body.light-mode h3 { color: #111 !important; }
 body.light-mode .menu-content-text, body.light-mode p { color: #555 !important; }
+body.light-mode #theme-label { color: #111 !important; }
+body.light-mode #contrast-label { color: #555 !important; }
 
 /* Przyciski i elementy UI */
 body.light-mode .glass-btn, body.light-mode #user-menu { background: rgba(255,255,255,0.9); color: #111; border-color: rgba(0,0,0,0.1); }
@@ -365,4 +367,96 @@ body.light-mode #theme-label { color: #555; }
 /* --- JASNA MAPA (Magiczna sztuczka CSS) --- */
 body.light-mode .leaflet-tile-pane {
     filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(1.1);
+}
+
+/* --- PRZYCISKI DOSTĘPNOŚCI (A11Y) --- */
+.font-controls {
+    display: flex;
+    gap: 5px;
+    background: #121212;
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid #282828;
+}
+
+.font-controls button {
+    flex: 1;
+    background: #1f1f1f;
+    color: #aaa;
+    border: none;
+    padding: 8px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.font-controls button:hover {
+    background: #282828;
+    color: #1DB954;
+    transform: translateY(-1px);
+}
+
+.font-controls button:active {
+    transform: translateY(1px);
+}
+
+/* Wariant dla trybu jasnego */
+body.light-mode .font-controls {
+    background: #eef0f2;
+    border-color: #ddd;
+}
+
+body.light-mode .font-controls button {
+    background: #fff;
+    color: #555;
+    border: 1px solid #ccc;
+}
+
+body.light-mode .font-controls button:hover {
+    background: #ebebeb;
+    color: #1DB954;
+}
+
+/* --- ZMIENNA BAZOWA DLA CZCIONKI --- */
+:root {
+    --base-font-size: 14px;
+}
+
+/* Wymuszenie dziedziczenia zmiennej na całej stronie */
+body {
+    font-size: var(--base-font-size);
+}
+button, input, textarea, p, span, div {
+    font-size: inherit;
+}
+
+/* --- TRYB WYSOKIEGO KONTRASTU (WCAG) --- */
+body.high-contrast,
+body.high-contrast #side-panel,
+body.high-contrast #menu-panel,
+body.high-contrast #profile-panel,
+body.high-contrast .modal-content {
+    background-color: #000 !important;
+    color: #ffcc00 !important;
+    border-color: #ffcc00 !important;
+}
+
+body.high-contrast button {
+    background-color: #ffcc00 !important;
+    color: #000 !important;
+    border: 2px solid #ffcc00 !important;
+    font-weight: bold !important;
+}
+
+body.high-contrast input,
+body.high-contrast textarea {
+    background-color: #000 !important;
+    color: #ffcc00 !important;
+    border: 2px solid #ffcc00 !important;
+}
+
+body.high-contrast .prof-link {
+    color: #fff !important;
+    text-decoration: underline !important;
 }

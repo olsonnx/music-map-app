@@ -1,9 +1,9 @@
-import { db, auth } from '../api/firebase-config.js';
-// ZMIANA: Dodano getDoc i setDoc do importów
-import { doc, deleteDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { auth } from '../api/firebase-config.js';
 import { loadRatings, clearRatings } from './ratings.js';
 import { loadComments, clearComments } from './comments.js';
 import { showUserProfile } from './profile.js';
+
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/frontend/frontend/api';
 
 const sidePanel = document.getElementById('side-panel');
 const closePanelBtn = document.getElementById('close-panel-btn');
@@ -11,6 +11,7 @@ const panelSongInfo = document.getElementById('panel-song-info');
 
 let bubbleTimerInterval = null;
 
+// Zamyka panel, czyści dane z poprzedniego utworu i wyłącza licznik czasu
 export const closePanel = () => {
     sidePanel.classList.remove('active');
     clearComments();
@@ -20,11 +21,14 @@ export const closePanel = () => {
 
 closePanelBtn.addEventListener('click', closePanel);
 
-export const openSidePanel = (bubbleId, data) => {
+// Główna funkcja ładująca dane utworu do panelu bocznego
+export const openSidePanel = async (bubbleId, data) => {
     document.getElementById('search-modal').classList.remove('active');
 
+    // Sprawdzenie, czy użytkownik jest właścicielem tego "dymka"
     const isOwner = auth.currentUser && auth.currentUser.uid === data.userId;
 
+    // Renderowanie okładki: link do Spotify lub zwykły obrazek
     let coverHTML = '';
     if (data.coverUrl) {
         if (data.spotifyUrl) {
@@ -39,6 +43,7 @@ export const openSidePanel = (bubbleId, data) => {
         }
     }
 
+    // Wstrzyknięcie informacji o utworze do HTML
     panelSongInfo.innerHTML = `
         ${coverHTML}
         <h2>${data.songName}</h2>
@@ -49,55 +54,52 @@ export const openSidePanel = (bubbleId, data) => {
         ${isOwner ? `<button id="delete-bubble-btn" class="delete-bubble-btn">Usuń swój utwór</button>` : ''}
     `;
 
-    // --- SYSTEM ULUBIONYCH (SERDUSZKO) ---
+    // System ulubionych: sprawdzamy w bazie czy utwór już jest polubiony
     const favBtn = document.getElementById('favorite-btn');
     if (auth.currentUser && favBtn) {
         favBtn.style.display = 'inline-block';
         const myUid = auth.currentUser.uid;
-        const songKey = data.spotifyId || data.songName; // Unikalny identyfikator utworu
+        const songKey = data.spotifyId || data.songName;
         
-        // Sprawdzamy, czy utwór jest już w ulubionych
-        getDoc(doc(db, "users", myUid)).then(docSnap => {
-            let favs = docSnap.exists() ? (docSnap.data().favorites || []) : [];
-            let isFav = favs.some(f => f.id === songKey);
+        try {
+            const res = await fetch(`${API_BASE}/favorites/check?userId=${myUid}&songKey=${songKey}`);
+            const favData = await res.json();
+            let isFav = favData.isFavorited;
 
             favBtn.textContent = isFav ? '💚' : '🤍';
             if (isFav) favBtn.classList.add('active');
 
-            // Kliknięcie serduszka
+            // Obsługa kliknięcia w ulubione (dodawanie lub usuwanie w API)
             favBtn.addEventListener('click', async () => {
-                favBtn.textContent = '⏳'; // Chwilowy loader
+                favBtn.textContent = '⏳';
                 try {
-                    const freshSnap = await getDoc(doc(db, "users", myUid));
-                    let currentFavs = freshSnap.exists() ? (freshSnap.data().favorites || []) : [];
-                    const alreadyFav = currentFavs.some(f => f.id === songKey);
-
-                    if (alreadyFav) {
-                        // Usuwamy z ulubionych
-                        currentFavs = currentFavs.filter(f => f.id !== songKey);
-                        favBtn.textContent = '🤍';
-                        favBtn.classList.remove('active');
-                    } else {
-                        // Dodajemy do ulubionych (zapisujemy wszystkie dane utworu)
-                        currentFavs.push({
-                            id: songKey,
+                    const method = isFav ? 'DELETE' : 'POST';
+                    const response = await fetch(`${API_BASE}/favorites`, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            userId: myUid,
+                            songKey: songKey,
                             songName: data.songName,
                             artistName: data.artistName || 'Nieznany wykonawca',
                             coverUrl: data.coverUrl || ''
-                        });
-                        favBtn.textContent = '💚';
-                        favBtn.classList.add('active');
-                    }
+                        })
+                    });
 
-                    await setDoc(doc(db, "users", myUid), { favorites: currentFavs }, { merge: true });
+                    if (response.ok) {
+                        isFav = !isFav;
+                        favBtn.textContent = isFav ? '💚' : '🤍';
+                        if (isFav) favBtn.classList.add('active'); else favBtn.classList.remove('active');
+                    }
                 } catch (e) {
                     console.error("Błąd ulubionych:", e);
-                    favBtn.textContent = isFav ? '💚' : '🤍'; // W razie błędu cofa UI
+                    favBtn.textContent = isFav ? '💚' : '🤍'; 
                 }
             });
-        });
+        } catch (error) { console.error("Błąd ładowania ulubionych:", error); }
     }
 
+    // Kliknięcie w nick autora przenosi do profilu
     const profileLink = panelSongInfo.querySelector('.prof-link');
     if (profileLink) {
         profileLink.addEventListener('click', (e) => {
@@ -108,23 +110,26 @@ export const openSidePanel = (bubbleId, data) => {
 
     sidePanel.classList.add('active');
 
+    // Usuwanie utworu przez właściciela
     if (isOwner) {
         document.getElementById('delete-bubble-btn').addEventListener('click', async () => {
             const confirmDelete = confirm("Czy na pewno chcesz usunąć ten utwór z mapy?");
             if (confirmDelete) {
                 try {
-                    await deleteDoc(doc(db, "bubbles", bubbleId));
+                    await fetch(`${API_BASE}/bubbles/${bubbleId}`, { method: 'DELETE' });
                     closePanel();
                 } catch (error) { console.error("Błąd usuwania:", error); }
             }
         });
     }
 
+    // Licznik czasu wygasania: obliczamy ile zostało do końca doby (24h)
     if (bubbleTimerInterval) clearInterval(bubbleTimerInterval);
 
-    const createdAt = data.timestamp ? data.timestamp.toDate().getTime() : new Date().getTime();
+    const createdAt = data.timestamp ? new Date(data.timestamp).getTime() : new Date().getTime();
     const expiresAt = createdAt + (24 * 60 * 60 * 1000);
 
+    // Funkcja aktualizująca tekst zegara co sekundę
     const updateTimer = () => {
         const now = new Date().getTime();
         const distance = expiresAt - now;
@@ -143,6 +148,7 @@ export const openSidePanel = (bubbleId, data) => {
     updateTimer(); 
     bubbleTimerInterval = setInterval(updateTimer, 1000); 
 
+    // Ładowanie ocen i komentarzy po otwarciu panelu
     if (!data.spotifyId) clearRatings();
     else loadRatings(data.spotifyId);
     

@@ -8,12 +8,10 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <!-- Przycisk Menu (Lewy górny róg) -->
     <div id="hamburger-btn" class="hamburger-btn" title="Menu główne">
         ☰
     </div>
 
-    <!-- Interfejs w prawym górnym rogu -->
     <div id="ui-container">
         <button id="open-auth-btn" class="glass-btn">Zaloguj się</button>
         <div id="user-menu" style="display: none; align-items: center;">
@@ -22,7 +20,6 @@
         </div>
     </div>
 
-    <!-- Modal logowania -->
     <div id="auth-modal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" id="close-modal-btn">&times;</span>
@@ -31,6 +28,9 @@
             <input type="text" id="username-input" placeholder="Wymyśl nazwę użytkownika" style="display: none;">
             <input type="email" id="email-input" placeholder="Twój E-mail">
             <input type="password" id="password-input" placeholder="Hasło (min. 6 znaków)">
+            <div id="forgot-password-container" style="text-align: right; margin-top: -5px; margin-bottom: 15px;">
+            <span id="forgot-password-link" style="font-size: 12px; color: #1DB954; cursor: pointer;">Zapomniałeś hasła?</span>
+            </div>
             <button id="action-btn" class="modal-btn">Zaloguj się</button>
             <div class="toggle-text">
                 <span id="toggle-hint">Nie masz konta?</span> 
@@ -39,7 +39,6 @@
         </div>
     </div>
 
-    <!-- Modal Wyszukiwarki -->
     <div id="search-modal" class="modal-overlay">
         <div class="modal-content" style="max-width: 400px;">
             <span class="close-modal" id="close-search-btn">&times;</span>
@@ -51,7 +50,6 @@
         </div>
     </div>
 
-    <!-- LEWY PANEL (SZCZEGÓŁY PIOSENKI) - zwróć uwagę na "left-panel" -->
     <div id="side-panel" class="side-panel left-panel">
         <button id="close-panel-btn" class="close-panel">&times;</button>
         
@@ -78,11 +76,9 @@
         </div>
     </div>
 
-    <!-- LEWY PANEL (MENU GŁÓWNE) -->
     <div id="menu-panel" class="side-panel left-panel">
         <button id="close-menu-btn" class="close-panel">&times;</button>
         
-        <!-- GŁÓWNY WIDOK MENU -->
         <div id="menu-main" class="panel-section" style="margin-top: 40px; height: calc(100% - 80px); display: flex; flex-direction: column;">
             <h2 style="margin-bottom: 20px; border-bottom: 2px solid #1DB954; padding-bottom: 10px; color: #fff;">Menu</h2>
             
@@ -91,17 +87,36 @@
                 <div class="menu-item" id="nav-toplist">Toplista <span style="font-size: 10px; color: #1DB954; float: right; margin-top: 4px;">Wkrótce</span></div>
             </div>
 
-            <!-- PRZEŁĄCZNIK TRYBU -->
-            <div class="theme-toggle-container">
-                <span id="theme-label" style="font-size: 14px; font-weight: bold; color: #aaa;">Tryb jasny</span>
-                <label class="switch">
-                    <input type="checkbox" id="theme-toggle">
-                    <span class="slider round"></span>
-                </label>
+            <div class="menu-section" style="margin-top: auto; padding-top: 25px; padding-bottom: 15px; border-top: 1px solid #282828;">
+                <h3 style="font-size: 14px; margin-bottom: 20px; margin-top: 0; color: #1DB954; text-transform: uppercase; letter-spacing: 1px;">Wygląd i dostępność</h3>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <span id="theme-label" style="font-size: 14px; font-weight: bold; color: #fff;">Tryb jasny</span>
+                    <label class="switch">
+                        <input type="checkbox" id="theme-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <span id="contrast-label" style="font-size: 14px; font-weight: bold; color: #aaa;">Wysoki kontrast</span>
+                    <label class="switch">
+                        <input type="checkbox" id="high-contrast-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div>
+                    <span style="display: block; font-size: 11px; color: #aaa; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Rozmiar tekstu</span>
+                    <div class="font-controls">
+                        <button id="font-decrease" title="Zmniejsz rozmiar">A-</button>
+                        <button id="font-reset" title="Przywróć domyślny">A</button>
+                        <button id="font-increase" title="Zwiększ rozmiar">A+</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- PODSTRONA: O STRONIE -->
         <div id="menu-about" class="panel-section" style="margin-top: 40px; display: none;">
             <button class="back-menu-btn back-to-main">← Wróć do menu</button>
             <h2 style="margin-bottom: 20px; border-bottom: 2px solid #1DB954; padding-bottom: 10px; color: #fff;">O stronie</h2>
@@ -110,11 +125,12 @@
                 <p>To miejsce, w którym możesz dzielić się swoimi ulubionymi utworami, przypinając je do konkretnych miejsc na mapie świata.</p>
                 <p>Utwory znikają automatycznie po 24 godzinach. Dodawaj znajomych, oceniaj muzykę i twórzcie wspólną, globalną playlistę!</p>
                 <p>Strona została przygotowana w ramach projektu dyplomowego jako część pracy licencjackiej pt. "Odkrywanie muzyki w erze streamingu – projekt i analiza aplikacji wspierającej eksplorację i dzielenie się treściami muzycznymi”.</p>
-                <p style="margin-top: 30px; font-size: 12px; color: #888;">Autor - Aleksander Ruszkowski.<br>Wersja: 1.0</p>
+                <p>Autorem niniejszego serwisu jest Aleksander Ruszkowski.</p>
+                <p>Serwis ten stanowi integralną część pracy licencjackiej (kierunek: elektroniczne przetwarzanie informacji), przygotowanej pod kierunkiem dr Michaliny Lubaszewskiej na Wydziale Zarządzania i Komunikacji Społecznej Uniwersytetu Jagiellońskiego.</p>
+                <p style="margin-top: 30px; font-size: 12px; color: #888;">Wersja: 1.0</p>
             </div>
         </div>
 
-        <!-- PODSTRONA: TOPLISTA -->
         <div id="menu-toplist" class="panel-section" style="margin-top: 40px; display: none;">
             <button class="back-menu-btn back-to-main">← Wróć do menu</button>
             <h2 style="margin-bottom: 20px; border-bottom: 2px solid #1DB954; padding-bottom: 10px; color: #fff;">Toplista</h2>
@@ -124,7 +140,6 @@
         </div>
     </div>
 
-    <!-- PRAWY PANEL (PROFIL UŻYTKOWNIKA) -->
     <div id="profile-panel" class="side-panel right-panel">
         <button id="close-profile-btn" class="close-panel">&times;</button>
         
@@ -133,17 +148,14 @@
             <h2 id="profile-name-title" style="margin: 0;"></h2>
         </div>
         
-        <!-- NOWOŚĆ: ZAKŁADKI -->
         <div class="profile-tabs">
             <button id="tab-edit" class="profile-tab active">Edytuj profil</button>
             <button id="tab-friends" class="profile-tab">Znajomi</button>
-            <button id="tab-favorites" class="profile-tab">Ulubione</button> <!-- NOWOŚĆ -->
+            <button id="tab-favorites" class="profile-tab">Ulubione</button> 
         </div>
 
-        <!-- SEKCJA EDYCJI / PODGLĄDU PROFILU -->
         <div id="section-edit" class="panel-section profile-section active">
             
-            <!-- TO WIDZISZ TYLKO TY (TWOJA EDYCJA) -->
             <div id="my-profile-edit">
                 <label for="profile-pic-url">Link do zdjęcia (URL):</label>
                 <input type="text" id="profile-pic-url" placeholder="https://...">
@@ -152,19 +164,17 @@
                 <textarea id="profile-bio" placeholder="Napisz coś o sobie..."></textarea>
                 
                 <button id="save-profile-btn" class="modal-btn" style="margin-top: 15px;">Zapisz zmiany</button>
+                <button id="reset-password-btn" class="modal-btn" style="margin-top: 10px; background: #444; color: #fff;">Zmień hasło</button>
             </div>
 
-            <!-- TO WIDZISZ, GDY KLIKASZ W KOGOŚ INNEGO (TYLKO DO ODCZYTU) -->
             <div id="guest-profile-view" style="display: none;">
                 <p id="guest-bio" style="font-size: 14px; color: #ccc; line-height: 1.5; font-style: italic; background: #1f1f1f; padding: 15px; border-radius: 8px; border-left: 3px solid #1DB954;"></p>
                 
-                <!-- NOWOŚĆ: Przycisk akcji w profilu -->
                 <button id="profile-action-btn" class="modal-btn" style="margin-top: 15px; font-size: 14px; padding: 10px;">Dodaj do znajomych</button>
             </div>
 
         </div>
 
-        <!-- NOWOŚĆ: SEKCJA ZNAJOMYCH -->
         <div id="section-friends" class="panel-section profile-section">
             <div class="add-friend-area">
                 <input type="text" id="add-friend-input" placeholder="Wpisz nick znajomego..." style="width: 100%; padding: 10px; margin-bottom: 10px; background: #282828; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box;">
@@ -173,16 +183,13 @@
             
             <h3 style="margin-top: 20px; font-size: 14px; color: #aaa; margin-bottom: 5px;">Twoi znajomi:</h3>
             <div id="friends-list" class="friends-list">
-                <!-- Tutaj JavaScript wygeneruje listę znajomych -->
-            </div>
+                </div>
         </div>
 
-        <!-- NOWOŚĆ: SEKCJA ULUBIONYCH -->
         <div id="section-favorites" class="panel-section profile-section">
             <h3 style="margin-top: 0; font-size: 14px; color: #aaa; margin-bottom: 15px;">Ulubione utwory:</h3>
             <div id="favorites-list" class="friends-list">
-                <!-- Tutaj wpadną piosenki -->
-            </div>
+                </div>
         </div>
     </div>
 

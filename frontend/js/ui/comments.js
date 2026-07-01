@@ -1,24 +1,26 @@
-import { db, auth } from '../api/firebase-config.js';
-import { collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { auth } from '../api/firebase-config.js'; 
 import { authModal } from './auth.js';
 import { showUserProfile } from './profile.js';
+
+const API_BASE = 'https://jawor.wzks.uj.edu.pl/~22_ruszkowski/frontend/frontend/api';
 
 const commentsList = document.getElementById('comments-list');
 const commentInput = document.getElementById('comment-input');
 const addCommentBtn = document.getElementById('add-comment-btn');
 
+// Przechowujemy ID aktualnie wyświetlanego "dymka" (bubble)
 let currentBubbleId = null;
-let unsubscribeComments = null;
 
+// Konfiguracja licznika znaków
 const MAX_CHARS = 140;
 let charCounter = null;
 
+// Inicjalizacja licznika znaków przy polu wpisywania
 if (commentInput) {
-    // Fizyczna blokada pola tekstowego
     commentInput.setAttribute('maxlength', MAX_CHARS);
     commentInput.placeholder = `Napisz komentarz...`;
     
-    // Tworzenie licznika na żywo w JS
+    // Tworzenie elementu wyświetlającego liczbę znaków
     charCounter = document.createElement('div');
     charCounter.style.fontSize = '11px';
     charCounter.style.color = '#888';
@@ -28,11 +30,10 @@ if (commentInput) {
     charCounter.style.textAlign = 'right';
     charCounter.textContent = `0 / ${MAX_CHARS}`;
     
-    // POPRAWKA: Wrzucamy licznik POD całą strefę wpisywania (poza flexboxa)
     const inputArea = commentInput.parentNode;
     inputArea.parentNode.insertBefore(charCounter, inputArea.nextSibling);
 
-    // Nasłuchiwanie wpisywania
+    // Aktualizacja licznika podczas pisania
     commentInput.addEventListener('input', () => {
         const len = commentInput.value.length;
         charCounter.textContent = `${len} / ${MAX_CHARS}`;
@@ -40,10 +41,8 @@ if (commentInput) {
     });
 }
 
+// Funkcja czyszcząca formularz komentarzy
 export const clearComments = () => {
-    if (unsubscribeComments) unsubscribeComments();
-    
-    // Czyszczenie pola i licznika przy zamykaniu panelu
     if (commentInput) commentInput.value = '';
     if (charCounter) {
         charCounter.textContent = `0 / ${MAX_CHARS}`;
@@ -51,35 +50,36 @@ export const clearComments = () => {
     }
 };
 
-export const loadComments = (bubbleId) => {
+// Funkcja pobierająca i renderująca listę komentarzy dla konkretnego dymka
+export const loadComments = async (bubbleId) => {
     currentBubbleId = bubbleId;
-    if (unsubscribeComments) unsubscribeComments();
+    commentsList.innerHTML = '<p style="color: #666; font-size: 13px; text-align: center; margin-top: 20px;">Ładowanie komentarzy...</p>';
     
-    const commentsRef = collection(db, "bubbles", bubbleId, "comments");
-    const q = query(commentsRef, orderBy("timestamp", "asc"));
+    try {
+        const response = await fetch(`${API_BASE}/comments/${bubbleId}`);
+        const comments = await response.json();
 
-    unsubscribeComments = onSnapshot(q, (snapshot) => {
+        // Jeśli brak komentarzy, wyświetlamy stosowny komunikat
         commentsList.innerHTML = '';
-        if (snapshot.empty) {
+        if (comments.length === 0) {
             commentsList.innerHTML = '<p style="color: #666; font-size: 13px; text-align: center; margin-top: 20px;">Brak komentarzy. Bądź pierwszy!</p>';
             return;
         }
         
-        snapshot.forEach((docSnap) => {
-            const commentId = docSnap.id;
-            const commentData = docSnap.data();
+        // Renderowanie poszczególnych komentarzy
+        comments.forEach((commentData) => {
             const div = document.createElement('div');
             div.className = 'comment-item';
             
+            // Obsługa wyświetlania usuniętych komentarzy
             if (commentData.isDeleted) {
-                div.innerHTML = `
-                    <span class="comment-text" style="color: #888; font-style: italic; font-size: 13px;">[ Ten komentarz został usunięty ]</span>
-                `;
+                div.innerHTML = `<span class="comment-text" style="color: #888; font-style: italic; font-size: 13px;">[ Ten komentarz został usunięty ]</span>`;
             } else {
+                // Sprawdzamy czy komentarz należy do zalogowanego użytkownika (żeby dodać opcję usuwania)
                 const isMine = auth.currentUser && auth.currentUser.uid === commentData.userId;
                 
                 const deleteBtnHtml = isMine 
-                    ? `<button class="delete-comment-btn" data-id="${commentId}" style="float: right; background: none; border: none; cursor: pointer; color: #e74c3c; font-size: 12px; margin-top: 2px;" title="Usuń komentarz">✖</button>` 
+                    ? `<button class="delete-comment-btn" data-id="${commentData.id}" style="float: right; background: none; border: none; cursor: pointer; color: #e74c3c; font-size: 12px; margin-top: 2px;" title="Usuń komentarz">✖</button>` 
                     : '';
 
                 div.innerHTML = `
@@ -92,47 +92,62 @@ export const loadComments = (bubbleId) => {
             commentsList.appendChild(div);
         });
         commentsList.scrollTop = commentsList.scrollHeight;
-    });
+    } catch (error) {
+        console.error("Błąd pobierania komentarzy:", error);
+        commentsList.innerHTML = '<p style="color: red; font-size: 13px; text-align: center;">Błąd ładowania komentarzy.</p>';
+    }
 };
 
+// Funkcja obsługująca dodawanie nowego komentarza
 const submitComment = async () => {
+    // Sprawdzenie czy użytkownik jest zalogowany
     if (!auth.currentUser) { authModal.classList.add('active'); return; }
     
     const text = commentInput.value.trim();
     if (!text || !currentBubbleId) return;
 
-    // Awaryjne sprawdzenie (np. gdyby ktoś wkleił za dużo znaków przez skrypt)
     if (text.length > MAX_CHARS) {
         alert(`Komentarz jest za długi! Maksymalnie ${MAX_CHARS} znaków.`);
         return;
     }
 
     try {
-        await addDoc(collection(db, "bubbles", currentBubbleId, "comments"), {
-            text: text,
-            userName: auth.currentUser.displayName || "Anonim",
-            userId: auth.currentUser.uid,
-            timestamp: new Date(),
-            isDeleted: false
+        // Wysyłamy komentarz do API
+        const response = await fetch(`${API_BASE}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                bubbleId: currentBubbleId,
+                userId: auth.currentUser.uid,
+                text: text
+            })
         });
+
+        if (!response.ok) throw new Error('Błąd dodawania komentarza');
         
-        // Reset po wysłaniu
+        // Czyścimy pole po dodaniu
         commentInput.value = ''; 
         if (charCounter) {
             charCounter.textContent = `0 / ${MAX_CHARS}`;
             charCounter.style.color = '#888';
         }
+
+        // Odświeżamy listę komentarzy
+        loadComments(currentBubbleId);
+
     } catch (error) { console.error("Błąd dodawania komentarza:", error); }
 };
 
+// Listenery dla przycisku dodawania i klawisza Enter
 addCommentBtn.addEventListener('click', submitComment);
 commentInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') submitComment();
 });
 
-// --- NASŁUCHIWANIE KLIKNIĘĆ (PROFILE I USUWANIE) ---
+// Obsługa kliknięć w listę komentarzy (przejście do profilu lub usuwanie)
 if (commentsList) {
     commentsList.addEventListener('click', async (e) => {
+        // Kliknięcie w autora -> profil
         const profileLink = e.target.closest('.prof-link');
         if (profileLink) {
             const uid = profileLink.getAttribute('data-uid');
@@ -140,6 +155,7 @@ if (commentsList) {
             return;
         }
 
+        // Kliknięcie w przycisk usuwania (X)
         const deleteBtn = e.target.closest('.delete-comment-btn');
         if (deleteBtn && currentBubbleId) {
             const commentId = deleteBtn.getAttribute('data-id');
@@ -147,11 +163,16 @@ if (commentsList) {
             
             if (confirmDelete) {
                 try {
-                    const commentRef = doc(db, "bubbles", currentBubbleId, "comments", commentId);
-                    await updateDoc(commentRef, {
-                        isDeleted: true,
-                        text: "" 
+                    // Wykonujemy patch na API, żeby oznaczyć komentarz jako usunięty
+                    const response = await fetch(`${API_BASE}/comments/${commentId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ isDeleted: true })
                     });
+
+                    if (!response.ok) throw new Error('Błąd usuwania komentarza');
+                    loadComments(currentBubbleId);
+
                 } catch (error) {
                     console.error("Błąd podczas usuwania komentarza:", error);
                     alert("Nie udało się usunąć komentarza.");
