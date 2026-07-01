@@ -1,0 +1,17 @@
+# Zależności
+node_modules/
+
+# Zmienne środowiskowe / sekrety
+.env
+.env.*
+!.env.example
+
+# Logi
+*.log
+npm-debug.log*
+
+# Pliki systemowe / edytory
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
